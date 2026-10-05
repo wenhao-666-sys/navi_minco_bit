@@ -1,0 +1,138 @@
+{
+  "result": "PASS",
+  "chapters": 23,
+  "pages": 26,
+  "bookmarks": 24,
+  "bash_blocks_syntax_checked": 12,
+  "powershell_blocks": 4,
+  "powershell_parser_review": "PASS: 4 blocks parsed without execution",
+  "out_of_bounds_text_spans": 0,
+  "text_extractable": true,
+  "git_write_operations_executed": false,
+  "runtime_verified": false,
+  "chapter_pages": {
+    "toc": 2,
+    "chapter_01": 3,
+    "chapter_02": 4,
+    "chapter_03": 5,
+    "chapter_04": 6,
+    "chapter_05": 7,
+    "chapter_06": 8,
+    "chapter_07": 9,
+    "chapter_08": 10,
+    "chapter_09": 11,
+    "chapter_10": 12,
+    "chapter_11": 13,
+    "chapter_12": 14,
+    "chapter_13": 15,
+    "chapter_14": 16,
+    "chapter_15": 17,
+    "chapter_16": 18,
+    "chapter_17": 19,
+    "chapter_18": 20,
+    "chapter_19": 21,
+    "chapter_20": 22,
+    "chapter_21": 23,
+    "chapter_22": 24,
+    "chapter_23": 25
+  },
+  "code_layout": [
+    {
+      "language": "bash",
+      "lines": 6,
+      "font_size": 8.4
+    },
+    {
+      "language": "bash",
+      "lines": 2,
+      "font_size": 8.4
+    },
+    {
+      "language": "powershell",
+      "lines": 4,
+      "font_size": 8.4
+    },
+    {
+      "language": "powershell",
+      "lines": 2,
+      "font_size": 8.4
+    },
+    {
+      "language": "bash",
+      "lines": 3,
+      "font_size": 8.4
+    },
+    {
+      "language": "bash",
+      "lines": 4,
+      "font_size": 8.4
+    },
+    {
+      "language": "bash",
+      "lines": 4,
+      "font_size": 8.4
+    },
+    {
+      "language": "powershell",
+      "lines": 8,
+      "font_size": 8.4
+    },
+    {
+      "language": "powershell",
+      "lines": 4,
+      "font_size": 8.4
+    },
+    {
+      "language": "text",
+      "lines": 4,
+      "font_size": 8.4
+    },
+    {
+      "language": "bash",
+      "lines": 2,
+      "font_size": 8.4
+    },
+    {
+      "language": "bash",
+      "lines": 6,
+      "font_size": 8.4
+    },
+    {
+      "language": "text",
+      "lines": 5,
+      "font_size": 8.4
+    },
+    {
+      "language": "bash",
+      "lines": 2,
+      "font_size": 8.4
+    },
+    {
+      "language": "bash",
+      "lines": 3,
+      "font_size": 8.4
+    },
+    {
+      "language": "bash",
+      "lines": 3,
+      "font_size": 8.4
+    },
+    {
+      "language": "bash",
+      "lines": 5,
+      "font_size": 8.4
+    },
+    {
+      "language": "bash",
+      "lines": 4,
+      "font_size": 8.4
+    }
+  ],
+  "pdf_sha256": "272702e81cbdf677f6b5e09a72fcca10e4edb3ab9b0cb96d06ed4c4d7ed4e188",
+  "markdown_sha256": "65b7395e97de8c9c7a09edcb2e08ce4f4ce5d8b70f1b99bd5f60b8936d3a13bb",
+  "pdf_bytes": 561468,
+  "visual_review": "PASS: all 26 rendered pages reviewed; contents, code and reference pages inspected at full size",
+  "toc_targets_checked": 23,
+  "official_source_links": 21,
+  "internal_links_checked": 89
+}

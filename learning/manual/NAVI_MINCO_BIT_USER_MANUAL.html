@@ -1,0 +1,661 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"><title>navi_minco_bit 导航部署与功能使用手册</title><style>
+@page{size:A4;margin:17mm 16mm 18mm;}*{box-sizing:border-box}
+body{margin:0;color:#253047;font:10.1pt/1.55 "Microsoft YaHei","Noto Sans CJK SC",sans-serif}
+p{margin:8px 0;text-align:left;orphans:3;widows:3}a{color:#1d4ed8;text-decoration:none;overflow-wrap:anywhere}
+strong{color:#12284c;font-weight:700}code{font:8.4pt/1.5 Consolas,"Microsoft YaHei",monospace;overflow-wrap:anywhere;color:#184a72}
+h2{font-size:19pt;line-height:1.35;color:var(--accent);margin:7px 0 18px;border-bottom:2px solid var(--accent);padding-bottom:12px;break-after:avoid}
+h3{font-size:12pt;margin:17px 0 8px;color:var(--accent);break-after:avoid}
+table{border-collapse:collapse;width:100%;margin:12px 0;font-size:8.7pt;table-layout:auto;line-height:1.48}
+th{background:#edf2f8;color:#183454;text-align:left;font-weight:700}
+th,td{padding:7px 8px;border:1px solid #dce3ed;vertical-align:top;overflow-wrap:anywhere}
+tr{break-inside:avoid}thead{display:table-header-group}tbody tr:nth-child(even){background:#f9fbfd}
+li{margin:5px 0}ul,ol{padding-left:22px;margin:10px 0}
+.codebox{background:#f2f5fa;border-left:3px solid var(--accent,#2563eb);padding:8px 11px;margin:12px 0;break-inside:avoid}
+.lang{font:7.4pt Consolas,sans-serif;color:#62758c;letter-spacing:1px}
+pre{white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-all;margin:4px 0;font:8.2pt/1.55 Consolas,"Microsoft YaHei",monospace;color:#18314c}
+.chapter{break-before:page}.eyebrow{font:8pt Consolas,sans-serif;letter-spacing:1.5px;color:#6f8098}
+#c08,#c10,#c14,#c22,#c25{font-size:9.6pt;line-height:1.48}
+#c10{font-size:9.3pt;line-height:1.42}
+#c10 table{font-size:8.4pt;line-height:1.4}#c10 td,#c10 th{padding:6px 7px}
+#c08 .codebox,#c10 .codebox,#c14 .codebox{margin:10px 0;padding:6px 10px}
+#c08 pre,#c10 pre,#c14 pre{font-size:8pt;line-height:1.45}
+#c22 table,#c25 table{font-size:8.3pt;line-height:1.4}
+#c22 td,#c22 th,#c25 td,#c25 th{padding:6px 7px}
+#c25 h3{break-before:page;margin-top:0;font-size:18pt}
+.cover{height:248mm;position:relative;display:flex;flex-direction:column;justify-content:space-between;break-after:page}
+.cover .badge{display:inline-block;background:#e8f1ff;color:#1d4ed8;padding:7px 12px;font-size:9pt;font-weight:bold}
+.cover h1{font-size:36pt;line-height:1.3;color:#12284c;margin:36px 0 16px}.cover .subtitle{font-size:18pt;color:#47627e}
+.cover .band{height:5px;background:linear-gradient(90deg,#059669 0 25%,#ea580c 25% 45%,#7c3aed 45% 70%,#0891b2 70% 85%,#db2777 85%);margin:25px 0}
+.cover .lead{font-size:13pt;line-height:1.9;max-width:90%}.cover .meta{border-top:1px solid #d7e0eb;padding-top:20px;color:#63748b;font-size:9pt}
+.notice{background:#fff7ed;border-left:4px solid #ea580c;padding:13px 16px;line-height:1.7}
+.toc{break-after:page}.toc h2{--accent:#2563eb}.tocgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px 17px;margin:22px 0}
+.tocgrid a{display:flex;align-items:center;gap:9px;border-bottom:1px solid #e4e9f1;padding:9px 0;font-size:9.8pt;color:#253e5c}
+.tocnumber{font:12pt Consolas;color:#2563eb;width:25px}.toc .key{background:#f2f5fa;padding:14px;font-size:9pt}
+@media screen{body{max-width:850px;margin:35px auto;padding:25px;box-shadow:0 4px 30px #dde4ed}.chapter{margin-top:70px}.cover{height:auto;min-height:800px}.toc{margin:70px 0}}
+</style></head><body>
+<div class="cover"><div><span class="badge">使用手册 · 版本 1.0 · 2026-10-04</span><h1>navi_minco_bit<br>导航部署与功能<br>使用手册</h1><div class="subtitle">从源码下载，到调用导航闭环</div><div class="band"></div><p class="lead">按模块查阅配置、启动命令、输入输出、验收判据与故障定位。<br>面向 NUC、双 MID-360 与接受 vx / vy 的舵轮底盘。</p></div>
+<div><div class="notice"><strong>使用边界</strong><br>当前为依据源码核对的部署指南，尚未在你的 NUC 编译或接车验证。IP、外参、场地地图、底盘坐标与协议必须按设备填写。原车比赛参数不能直接视作本车参数。</div><div class="meta">Ubuntu 22.04 / ROS 2 Humble<br>独立仓库：wenhao-666-sys/navi_minco_bit<br>源码基线：6dba3a53bf20848ac92dc1fb0fdfdaf9e8376a44<br>本手册不修改运行代码、配置或 Git 状态。</div></div></div>
+<div class="toc"><div class="eyebrow">CONTENTS / 快速导航</div><h2>按任务找到入口</h2><p>首次部署从 01 顺序执行；单模块操作可直接查对应章节。目录链接可点击，PDF 另附章节书签。</p><div class="tocgrid"><a href="#c01"><span class="tocnumber">01</span><span>首次部署路线与验收门槛</span></a><a href="#c02"><span class="tocnumber">02</span><span>模块地图、进程与文件入口</span></a><a href="#c03"><span class="tocnumber">03</span><span>部署前填写表与配置关联</span></a><a href="#c04"><span class="tocnumber">04</span><span>下载、系统与 ROS 环境</span></a><a href="#c05"><span class="tocnumber">05</span><span>依赖安装与首次构建</span></a><a href="#c06"><span class="tocnumber">06</span><span>参数、安装目录和路径规则</span></a><a href="#c07"><span class="tocnumber">07</span><span>雷达网络：主机 IP、设备 IP 与 UDP</span></a><a href="#c08"><span class="tocnumber">08</span><span>驱动与双雷达融合、外参标定</span></a><a href="#c09"><span class="tocnumber">09</span><span>PTP、IMU 与点云时间同步</span></a><a href="#c10"><span class="tocnumber">10</span><span>Point-LIO：启动、输入验证与 TF</span></a><a href="#c11"><span class="tocnumber">11</span><span>地图准备、PCD 保存与二维转换</span></a><a href="#c12"><span class="tocnumber">12</span><span>GICP：初始配准、回退与重新定位</span></a><a href="#c13"><span class="tocnumber">13</span><span>Nav2、ROGMap 与 MINCO 的启动验收</span></a><a href="#c14"><span class="tocnumber">14</span><span>目标调用、规划验证与取消</span></a><a href="#c15"><span class="tocnumber">15</span><span>舵轮底盘：坐标、单位、串口与方向测试</span></a><a href="#c16"><span class="tocnumber">16</span><span>比赛行为树：何时启动、如何调用</span></a><a href="#c17"><span class="tocnumber">17</span><span>仿真：无硬件验证导航闭环</span></a><a href="#c18"><span class="tocnumber">18</span><span>Foxglove：本机、Windows 远程和三套面板</span></a><a href="#c19"><span class="tocnumber">19</span><span>MCAP 录制、离线查看与证据保存</span></a><a href="#c20"><span class="tocnumber">20</span><span>传感器回放：让算法重新计算</span></a><a href="#c21"><span class="tocnumber">21</span><span>每天启动、停止、重启与版本记录</span></a><a href="#c22"><span class="tocnumber">22</span><span>故障速查：从现象定位模块</span></a><a href="#c23"><span class="tocnumber">23</span><span>辅助功能调用卡</span></a><a href="#c24"><span class="tocnumber">24</span><span>调参入口、真实生效方式与当前陷阱</span></a><a href="#c25"><span class="tocnumber">25</span><span>接口速查与源码定位</span></a><a href="#c26"><span class="tocnumber">26</span><span>已确认的文档差异与部署待办</span></a><a href="#c27"><span class="tocnumber">27</span><span>依据、更新方式与查阅入口</span></a></div><div class="key"><strong>模块分色</strong>　蓝：工程与部署　绿：传感器与里程计　橙：地图与重定位　紫：规划与目标　青：底盘与决策　粉：维护与查阅<br><strong>命令规则</strong>　Ubuntu Bash；新终端先 source；launch 分终端执行；样例地址与目标坐标需要替换。<br><strong>课程续接</strong>　临时手册任务不改变课程验收，完成后继续 MPC 参数与源码。</div></div><section class="chapter" id="c01" style="--accent:#2563eb"><div class="eyebrow">DEPLOYMENT / MODULE 01</div><h2>01｜首次部署路线与验收门槛</h2><p>先完成配置再运行。每一步达到“通过”条件后才进入下一步，避免一次启动所有模块后无法定位问题。</p>
+<table><thead><tr><th>顺序</th><th>操作章节</th><th>通过条件</th></tr></thead><tbody>
+<tr><td>1</td><td>03 填设备表；04-06 下载、依赖、构建</td><td>关键包可以找到，插件库安装成功</td></tr>
+<tr><td>2</td><td>07 网络；08 驱动和融合；09 时间同步</td><td>两个雷达均参与融合，主 IMU 数据连续且时间合理</td></tr>
+<tr><td>3</td><td>10 Point-LIO 和 TF</td><td>静止、平移、旋转时 odom 与点云合理</td></tr>
+<tr><td>4</td><td>11 地图；12 GICP</td><td>正确地图与实测点云对齐，确认不是超时回退</td></tr>
+<tr><td>5</td><td>13 Nav2；14 目标与取消</td><td>生命周期激活，目标产生轨迹和控制输出</td></tr>
+<tr><td>6</td><td>15 舵轮接口和通信</td><td>电控确认坐标与单位，完成低速方向、停止测试</td></tr>
+<tr><td>7</td><td>16 比赛行为树</td><td>基础导航通过后再接入裁判数据与策略</td></tr>
+<tr><td>8</td><td>18-21 可视化、录包、复现</td><td>重启后可恢复，证据和配置可追溯</td></tr>
+</tbody></table>
+<p><strong>首次部署不直接执行 <code>start.bash</code>。</strong> 它会启动比赛策略和串口，且使用旧工作目录、固定等待时间和特定 PTP 网卡。先按本文分终端启动，确认每层，再决定是否调整脚本。</p>
+<p>最小实车计算链（先不启动通信和比赛行为树）：</p>
+<div class="codebox"><span class="lang">BASH</span><pre># 每个新终端先执行；这里假设工作空间放在此目录
+export NAVI_WS=&quot;$HOME/navi_minco_bit&quot;
+cd &quot;$NAVI_WS&quot;
+source /opt/ros/humble/setup.bash
+source &quot;$NAVI_WS/install/setup.bash&quot;
+
+# 终端 1：时间同步，见 09；网卡先核实
+# 终端 2：驱动与 Point-LIO，配置完成后启动
+ros2 launch point_lio mixed_livox_pointlio_intra_process.launch.py
+# 终端 3：GICP，先完成地图和初值配置
+ros2 launch icp_relocalization gicp_relocalization.launch.py
+# 终端 4：Nav2，见 13
+ros2 launch navi2 navigation2.launch.py</pre></div>
+<p>不要在同一终端连续粘贴四个启动命令：launch 会占用前台。先确认 Point-LIO 正常，再启动 GICP，再启动导航。通信未启动时，ROS 侧导航计算不会自动驱动真实底盘；这不等于完整实车导航已验收。</p></section><section class="chapter" id="c02" style="--accent:#2563eb"><div class="eyebrow">DEPLOYMENT / MODULE 02</div><h2>02｜模块地图、进程与文件入口</h2><p>主链：双雷达点云/IMU → Livox 融合 → Point-LIO → GICP 对齐与 ROGMap 环境表示 → MINCO → MPC → communication → MCU。行为树选择任务并调用 Nav2。</p>
+<table><thead><tr><th>模块</th><th>目录 / ROS 包名</th><th>主要职责</th></tr></thead><tbody>
+<tr><td>雷达驱动</td><td><code>src/perception/livox_ros_driver2</code></td><td>SDK 接收、IMU 发布、双雷达融合</td></tr>
+<tr><td>双雷达标定</td><td><code>src/perception/dual_lidar_calibration</code></td><td>离线求后雷达到前雷达外参</td></tr>
+<tr><td>里程计</td><td><code>src/perception/Point-LIO</code> / <code>point_lio</code></td><td>IMU 与点云运动估计、去畸变、局部地图</td></tr>
+<tr><td>重定位</td><td><code>src/perception/icp_relocalization</code></td><td>PCD 匹配、<code>map → camera_init</code></td></tr>
+<tr><td>环境地图</td><td><code>src/perception/rog_map</code></td><td>概率占据、地形投影、ESDF</td></tr>
+<tr><td>辅助感知</td><td><code>msg_convert</code>、<code>dbscan_cluster</code></td><td>裁剪过滤、障碍聚类与跟踪</td></tr>
+<tr><td>导航组织</td><td><code>src/navigation/navi2_bringup</code> / <code>navi2</code></td><td>Nav2 launch、参数、二维地图和导航树</td></tr>
+<tr><td>规划 / 控制</td><td><code>minco_planner</code>、<code>minco_controller</code></td><td>搜索、轨迹优化、MPC 跟踪</td></tr>
+<tr><td>串口</td><td><code>src/navigation/communication</code></td><td>协议解析、命令打包、裁判状态</td></tr>
+<tr><td>决策</td><td><code>src/decision/bt_manager</code></td><td>比赛行为树与 blackboard</td></tr>
+<tr><td>接口</td><td><code>src/ros_interfaces</code></td><td>自定义轨迹、行为和比赛消息</td></tr>
+<tr><td>地图工具</td><td><code>pcd2pgm</code>、<code>pcd2ele</code>、<code>pcd2esdf</code></td><td>栅格、高程、距离场转换</td></tr>
+<tr><td>普通工具</td><td><code>src/utils/pcd_trans</code></td><td>CloudLab 浏览器地图处理，不是 ROS 包</td></tr>
+<tr><td>仿真</td><td><code>src/simulation/sentry_simulation</code></td><td>Fortress 模型、传感器与速度适配</td></tr>
+</tbody></table>
+<p>上述共 17 个 ROS 包。完整逐文件索引见 <code>learning/PROJECT_INDEX.md</code>，完整关系图见 <code>learning/NAVI_MINCO_BIT_FLOWCHART.mmd</code> 及其 SVG/PNG 渲染。</p>
+<table><thead><tr><th>进程边界</th><th>实际包含的内容</th></tr></thead><tbody>
+<tr><td><code>/livox_pointlio_container</code></td><td>多线程组件容器；<code>/livox_driver_node</code>、<code>/laserMapping</code>；导航启动时再加载 <code>/planner_server</code></td></tr>
+<tr><td>规划器内部</td><td>MINCO 插件持有 ROGMap 与地图查询对象；不是额外启动一个独立 ROGMap 节点</td></tr>
+<tr><td>独立节点进程</td><td>GICP；默认非组合启动的 controller、BT navigator、smoother 等 Nav2 节点</td></tr>
+<tr><td>另外启动</td><td>communication、比赛 bt_manager、Foxglove bridge、录包</td></tr>
+</tbody></table>
+<p>容器启动、组件加载、生命周期激活是三个不同检查。当前 planner 的进程内通信选项为 false；同进程不代表所有消息都会零拷贝。</p></section><section class="chapter" id="c03" style="--accent:#2563eb"><div class="eyebrow">DEPLOYMENT / MODULE 03</div><h2>03｜部署前填写表与配置关联</h2><table><thead><tr><th>项目</th><th>原代码样例</th><th>本车填写值</th></tr></thead><tbody>
+<tr><td>NUC 工作空间绝对路径</td><td>原脚本 <code>~/2027-sentry-navi</code></td><td>__________________</td></tr>
+<tr><td>雷达网卡</td><td><code>enp86s0</code></td><td>__________________</td></tr>
+<tr><td>NUC 雷达网卡 IPv4 / 掩码</td><td><code>192.168.1.47</code> / 本文样例 <code>/24</code></td><td>__________________</td></tr>
+<tr><td>前雷达 IP / 主 IMU</td><td><code>192.168.1.135</code></td><td>__________________</td></tr>
+<tr><td>后雷达 IP</td><td><code>192.168.1.122</code></td><td>__________________</td></tr>
+<tr><td>后雷达 → 前雷达外参</td><td>第 08 节样例</td><td>__________________</td></tr>
+<tr><td>LiDAR → IMU 外参、车体安装偏移</td><td>第 10、15 节样例</td><td>__________________</td></tr>
+<tr><td>当前场地 PCD / PGM / YAML</td><td>原比赛地图</td><td>__________________</td></tr>
+<tr><td>启动初始位置、朝向与误差范围</td><td>原比赛启动点</td><td>__________________</td></tr>
+<tr><td>串口 / 波特率 / 帧协议</td><td><code>/dev/ttyACM0</code> / 115200</td><td>__________________</td></tr>
+<tr><td>MCU 接收 vx、vy 坐标系</td><td>尚未确认</td><td>车体系 / 世界系：________</td></tr>
+<tr><td>正方向与单位 / 命令超时停车</td><td>尚未确认</td><td>__________________</td></tr>
+<tr><td>Windows 到 NUC 的可达地址</td><td>与雷达地址可不同</td><td>__________________</td></tr>
+</tbody></table>
+<p><strong>一项硬件变更可能关联多份配置。</strong> 换前雷达 IP：JSON 的设备 IP + 融合 YAML 的 <code>merge_front_ip</code> + Point-LIO launch 的 IMU 话题。换 NUC IP：JSON 的五个主机接收地址 + 网卡配置。换场地：GICP PCD + Nav2 map YAML + ROGMap projection prior + 初值/默认位姿 + 策略中的区域/目标点。</p>
+<p>关键配置入口：</p>
+<table><thead><tr><th>配置</th><th>路径（相对仓库根目录）</th></tr></thead><tbody>
+<tr><td>网络</td><td><code>src/perception/livox_ros_driver2/config/mixed_MID360_config.json</code></td></tr>
+<tr><td>双雷达融合</td><td><code>src/perception/livox_ros_driver2/config/mixed_MID360_component.yaml</code></td></tr>
+<tr><td>LIO</td><td><code>src/perception/Point-LIO/config/mid360.yaml</code></td></tr>
+<tr><td>LIO launch 覆盖</td><td><code>src/perception/Point-LIO/launch/mixed_livox_pointlio_intra_process.launch.py</code></td></tr>
+<tr><td>GICP</td><td><code>src/perception/icp_relocalization/config/gicp_relocalization.yaml</code></td></tr>
+<tr><td>导航、MPC、ROGMap</td><td><code>src/navigation/navi2_bringup/params/sentry1.yaml</code></td></tr>
+<tr><td>串口设备</td><td><code>src/navigation/communication/src/com.cpp</code></td></tr>
+<tr><td>底盘打包与字段</td><td><code>communication/include/com_interface_ros.hpp</code>、<code>include/utils/custom_protocol.hpp</code></td></tr>
+</tbody></table></section><section class="chapter" id="c04" style="--accent:#2563eb"><div class="eyebrow">DEPLOYMENT / MODULE 04</div><h2>04｜下载、系统与 ROS 环境</h2><p>以下从已经安装 Ubuntu 22.04 的 NUC 开始。已安装 ROS 2 Humble 时跳过软件源设置，直接确认环境。首次安装参照 <a href="https://docs.ros.org/en/humble/Installation/Ubuntu-Install-Debs.html">ROS 2 Humble 官方 Ubuntu 安装说明</a>。</p>
+<h3>首次设置 ROS 软件源</h3>
+<p>先 <code>locale</code> 确认已有 UTF-8 locale；中文 UTF-8 环境无需改成英文。没有 UTF-8 时按官方说明安装 locales 并生成 en_US.UTF-8。先更新 Ubuntu 基础系统，再安装 ROS；不要跳过官方关于 Jammy 初期 systemd/udev 更新的要求。</p>
+<p>下面依据 <a href="https://raw.githubusercontent.com/ros2/ros2_documentation/humble/source/Installation/_Apt-Repositories.rst">ROS 官方软件源步骤</a>，仅适用于 Ubuntu 22.04 Jammy。已有旧 ROS 源时先按官方迁移说明核对，避免重复源和签名冲突。</p>
+<div class="codebox"><span class="lang">BASH</span><pre>sudo apt update
+sudo apt upgrade
+sudo apt install -y software-properties-common curl python3
+sudo add-apt-repository universe
+NAVI_ROS_APT_VERSION=$(curl -fsSL \
+  https://api.github.com/repos/ros-infrastructure/ros-apt-source/releases/latest \
+  | python3 -c &#x27;import json,sys; print(json.load(sys.stdin)[&quot;tag_name&quot;])&#x27;)
+curl -fL -o /tmp/ros2-apt-source.deb \
+  &quot;https://github.com/ros-infrastructure/ros-apt-source/releases/download/${NAVI_ROS_APT_VERSION}/ros2-apt-source_${NAVI_ROS_APT_VERSION}.jammy_all.deb&quot;
+sudo dpkg -i /tmp/ros2-apt-source.deb</pre></div>
+<p>下载或解析失败先修复网络，不能继续安装空文件。已安装 Humble 的设备无需重新做这组操作。</p>
+<p>ROS 软件源已配置后：</p>
+<div class="codebox"><span class="lang">BASH</span><pre>sudo apt update
+sudo apt install -y ros-humble-desktop ros-dev-tools \
+  python3-colcon-common-extensions python3-rosdep git \
+  build-essential cmake pkg-config
+source /opt/ros/humble/setup.bash
+lsb_release -ds
+uname -m
+printenv ROS_DISTRO
+which ros2</pre></div>
+<p>预期 Ubuntu 22.04、NUC 通常为 x86_64、<code>ROS_DISTRO=humble</code>。检查未通过时先修环境，不继续运行算法。</p>
+<p>下载自己的独立仓库：</p>
+<div class="codebox"><span class="lang">BASH</span><pre>git clone https://github.com/wenhao-666-sys/navi_minco_bit.git \
+  &quot;$HOME/navi_minco_bit&quot;
+export NAVI_WS=&quot;$HOME/navi_minco_bit&quot;
+cd &quot;$NAVI_WS&quot;
+git status --short
+git rev-parse HEAD
+git remote -v</pre></div>
+<p>私有仓库需有权限的 GitHub 登录或 SSH。Windows 尚未推送的学习文件不会自动出现在 NUC；可单独复制文档。本次不替你提交或推送。保留仓库来源与版本记录，不混入 USV 工作空间。</p>
+<p>后文每个新终端统一执行：</p>
+<div class="codebox"><span class="lang">BASH</span><pre>export NAVI_WS=&quot;$HOME/navi_minco_bit&quot;
+cd &quot;$NAVI_WS&quot;
+source /opt/ros/humble/setup.bash
+# 构建成功后才执行下一行
+source &quot;$NAVI_WS/install/setup.bash&quot;</pre></div>
+<p><code>NAVI_WS</code> 是本文选择的路径变量，可改为你的实际目录。不要在一个终端加载多个含同名包的旧导航工作空间。检查 <code>ROS_DOMAIN_ID</code>、<code>RMW_IMPLEMENTATION</code> 是否一致；本文不强制切换 DDS 实现。</p></section><section class="chapter" id="c05" style="--accent:#2563eb"><div class="eyebrow">DEPLOYMENT / MODULE 05</div><h2>05｜依赖安装与首次构建</h2><p>本节命令供你在 NUC 执行；本次文档制作没有执行 ROS 或 C++ 构建。系统依赖与 CMake 检查共同决定是否能编译，<code>rosdep</code> 不能补齐所有未声明的头文件库。</p>
+<div class="codebox"><span class="lang">BASH</span><pre>sudo apt install -y libeigen3-dev libpcl-dev libyaml-cpp-dev \
+  libgoogle-glog-dev libunwind-dev libfmt-dev libopencv-dev \
+  libomp-dev libapr1-dev linuxptp ethtool tcpdump \
+  ros-humble-navigation2 ros-humble-nav2-bringup \
+  ros-humble-backward-ros ros-humble-pcl-ros \
+  ros-humble-pcl-conversions ros-humble-ament-cmake-auto \
+  ros-humble-behaviortree-cpp-v3 \
+  ros-humble-spatio-temporal-voxel-layer
+cd &quot;$NAVI_WS&quot;
+sudo rosdep init
+rosdep update
+rosdep install --from-paths src --ignore-src -r -y</pre></div>
+<p><code>rosdep init</code> 仅首次执行，已初始化时跳过。若 rosdep 报仿真依赖缺失，安装第 17 节的仿真依赖，或在构建范围中明确排除 <code>sentry_simulation</code>；不要忽略错误后直接宣称依赖已完整。</p>
+<p>Livox SDK2 是 C/C++ SDK；按 <a href="https://github.com/Livox-SDK/Livox-SDK2">官方安装说明</a> 安装：</p>
+<div class="codebox"><span class="lang">BASH</span><pre>mkdir -p &quot;$HOME/navi_deps&quot;
+cd &quot;$HOME/navi_deps&quot;
+git clone https://github.com/Livox-SDK/Livox-SDK2.git
+cmake -S Livox-SDK2 -B Livox-SDK2/build
+cmake --build Livox-SDK2/build -j2
+sudo cmake --install Livox-SDK2/build
+sudo ldconfig</pre></div>
+<p>GICP 使用 small_gicp 头文件。按 <a href="https://github.com/koide3/small_gicp#installation">small_gicp C++ 官方说明</a> 安装，不能用同名 Python 包代替：</p>
+<div class="codebox"><span class="lang">BASH</span><pre>cd &quot;$HOME/navi_deps&quot;
+git clone https://github.com/koide3/small_gicp.git
+cmake -S small_gicp -B small_gicp/build -DCMAKE_BUILD_TYPE=Release
+cmake --build small_gicp/build -j2
+sudo cmake --install small_gicp/build
+sudo ldconfig</pre></div>
+<p>当前 small_gicp 官方仓库包含 Sophus。项目 README 还要求系统 Sophus；若编译提示 <code>sophus/...</code> 找不到，先检查 small_gicp 安装是否已包含，再安装 <a href="https://github.com/strasdat/Sophus">原版 Sophus</a> 的 C++ 头文件。不要改用 Sophus2 或 Rust 版本。记录实际依赖提交，避免每次拉取不同版本后比较性能。</p>
+<div class="codebox"><span class="lang">BASH</span><pre># 仅在缺少所需 Sophus 头文件时执行；本例禁用其测试和 Python绑定
+cd &quot;$HOME/navi_deps&quot;
+git clone https://github.com/strasdat/Sophus.git
+cmake -S Sophus -B Sophus/build -DBUILD_SOPHUS_TESTS=OFF \
+  -DBUILD_PYTHON_BINDINGS=OFF
+cmake --build Sophus/build -j2
+sudo cmake --install Sophus/build</pre></div>
+<p>这些是上游源码安装示例，不是已验证的依赖版本锁。记录仓库提交，若版本兼容问题先保留日志，再核对项目所需 API。</p>
+<div class="codebox"><span class="lang">BASH</span><pre>cd &quot;$NAVI_WS&quot;
+source /opt/ros/humble/setup.bash
+MEM_LIMIT_GB=12 MEM_PER_WORKER_GB=2 bash build.bash
+source install/setup.bash
+colcon list
+ros2 pkg prefix point_lio
+ros2 pkg prefix navi2
+ros2 pkg prefix minco_planner</pre></div>
+<p>脚本先串行编译核心包，再编译剩余包。<code>MEM_LIMIT_GB</code> 主要用于估算并行包数和打印系统内存告警，不是 cgroup 的硬内存上限；单包内部编译也可能占满内存。内存紧张时使用 <code>CMAKE_BUILD_PARALLEL_LEVEL=2</code> 限制构建工具并行。</p>
+<p>失败时查看 <code>log/latest_build/&lt;包名&gt;/stderr.log</code> 和 <code>stdout_stderr.log</code>，找第一个有效错误。<code>killed cc1plus</code> 常见于内存不足；<code>package not found</code> 查包安装与环境；<code>header not found</code> 查系统头文件路径；插件库不存在先确认对应包构建、安装成功。不要执行 <code>clean.bash</code> 删除证据来掩盖原因。</p></section><section class="chapter" id="c06" style="--accent:#2563eb"><div class="eyebrow">DEPLOYMENT / MODULE 06</div><h2>06｜参数、安装目录和路径规则</h2><p><code>ros2 launch</code> 从当前环境中的包安装目录读取 launch。<code>get_package_share_directory()</code> / <code>FindPackageShare()</code> 查的是该目录；不是自动使用你当前打开的源码文件。</p>
+<div class="codebox"><span class="lang">BASH</span><pre>ros2 pkg prefix --share navi2
+ros2 pkg prefix --share point_lio
+ros2 pkg prefix --share livox_ros_driver2
+ros2 launch navi2 navigation2.launch.py --show-args</pre></div>
+<p><code>navigation2.launch.py</code> 默认导航参数是 <code>params/sentry1.yaml</code>。<code>nav2_params.yaml</code> 不是默认生效文件。导航 launch 会重写 <code>use_sim_time</code>、<code>autostart</code> 等参数后传给节点。</p>
+<p>为避免误读安装副本，部署时可明确指定源码参数：</p>
+<div class="codebox"><span class="lang">BASH</span><pre>ros2 launch navi2 navigation2.launch.py \
+  params_file:=&quot;$NAVI_WS/src/navigation/navi2_bringup/params/sentry1.yaml&quot; \
+  map:=&quot;$NAVI_WS/src/navigation/navi2_bringup/maps/2026/rmuc2026.yaml&quot;</pre></div>
+<p>地图路径这里只演示原仓库资源；部署到你的场地时替换成自建地图。Point-LIO 可直接使用通用 launch 指定文件和主 IMU，见第 10 节。</p>
+<p>GICP PCD、ROGMap 先验、Nav2 行为树 XML 等默认路径含 <code>src/...</code>，依赖运行时工作目录。因此本文要求每个终端先 <code>cd &quot;$NAVI_WS&quot;</code>。部署配置更适合改为绝对路径；YAML 普通字符串中的 <code>$HOME</code> 不会自动展开。</p>
+<p><strong>修改文件、节点参数变化、算法实际采用新值，是三件事。</strong> 初始化缓存的参数通常需要重启或重新配置。查询示例：</p>
+<div class="codebox"><span class="lang">BASH</span><pre>ros2 param get /laserMapping common.imu_topic
+ros2 param get /planner_server MincoPlanner.plugin
+ros2 param get /controller_server FollowPath.dt
+ros2 param dump /controller_server</pre></div>
+<p>不要把 <code>ros2 param set</code> 的成功返回当作算法支持动态调参的证明。源码、launch 或插件注册修改需要重新构建；配置文件使用符号链接时可能直接更新，但仍需核对节点实际读取路径。</p></section><section class="chapter" id="c07" style="--accent:#059669"><div class="eyebrow">DEPLOYMENT / MODULE 07</div><h2>07｜雷达网络：主机 IP、设备 IP 与 UDP</h2><p>接线建议：NUC 有线网卡 → 千兆交换机 → 两台 MID-360，按雷达说明提供电源。Windows 远程显示可走另一网口或 Wi-Fi；不要求与雷达接收网卡使用同一地址。</p>
+<div class="codebox"><span class="lang">BASH</span><pre>ip -br link
+ip -br addr
+ip route
+nmcli device status
+nmcli connection show</pre></div>
+<p>先选实际雷达网卡，再确定是否由 NetworkManager 管理。下例创建一个仅用于雷达的配置，网卡名和 IP 必须替换；激活可能中断该网口当前连接，首次在 NUC 本地操作：</p>
+<div class="codebox"><span class="lang">BASH</span><pre>NAVI_IFACE=enp86s0
+NAVI_HOST_CIDR=192.168.1.47/24
+sudo nmcli connection add type ethernet ifname &quot;$NAVI_IFACE&quot; \
+  con-name navi-lidar ipv4.method manual \
+  ipv4.addresses &quot;$NAVI_HOST_CIDR&quot; ipv4.never-default yes \
+  ipv6.method disabled
+sudo nmcli connection up navi-lidar</pre></div>
+<p>已有 <code>navi-lidar</code> 配置时用 <code>nmcli connection modify</code>，不要重复创建。雷达专用网络通常不需要默认网关；互联网由其他连接承担。按实际设备网段填写掩码，不能把 <code>/24</code> 当作已知硬件事实。</p>
+<p>编辑 <code>mixed_MID360_config.json</code>：<code>host_net_info</code> 的 <code>cmd_data_ip</code>、<code>push_msg_ip</code>、<code>point_data_ip</code>、<code>imu_data_ip</code>、<code>log_data_ip</code> 全部填 NUC 雷达网卡地址；<code>lidar_configs[].ip</code> 填各自雷达真实地址。</p>
+<p>当前 JSON 中设备/主机对应端口均为 56100、56200、56300、56400、56500。端口先保持该配置，使用抓包核对实际目的端口；不要根据其他教程或监测脚本默认值猜端口。协议参见 <a href="https://livox-wiki-en.readthedocs.io/en/latest/tutorials/new_product/mid360/livox_eth_protocol_mid360.html">Livox MID-360 官方通信说明</a>。改 JSON 不会把雷达设备自身 IP 自动改成你填写的值；设备 IP 变更应按 Livox 工具/协议操作。</p>
+<div class="codebox"><span class="lang">BASH</span><pre>ping -c 3 192.168.1.135
+ping -c 3 192.168.1.122
+ip route get 192.168.1.135
+sudo tcpdump -ni &quot;$NAVI_IFACE&quot; \
+  &#x27;udp and (host 192.168.1.135 or host 192.168.1.122)&#x27;
+ss -lunp</pre></div>
+<p>通过条件：路由走正确网卡；两台雷达都有持续 UDP；启动驱动后接收到有效点云与 IMU。ping 仅证明一部分连通性，不能证明 UDP、消息或时间同步正确。没有数据时检查电源、网线、设备 IP、主机目的地址、端口、现有防火墙规则及端口占用，不直接关闭整机防火墙。</p></section><section class="chapter" id="c08" style="--accent:#059669"><div class="eyebrow">DEPLOYMENT / MODULE 08</div><h2>08｜驱动与双雷达融合、外参标定</h2><p>实车主入口使用 <code>mixed_MID360_component.yaml</code>；驱动独立 launch <code>msg_mixed_MID360.launch.py</code> 还有另一套写在 Python 中的参数。两者不能混用配置来源。</p>
+<p>当前组件配置：</p>
+<div class="codebox"><span class="lang">YAML</span><pre>enable_internal_lidar_merge: true
+merge_front_ip: 192.168.1.135
+merge_back_ip: 192.168.1.122
+merge_output_topic: livox/lidar
+merge_max_interval_ms: 5.0
+merge_extrinsic_back_to_front: [0.0, 0.38, -0.05, -0.36713, 0.0, 0.0]</pre></div>
+<p>外参数组为 <code>[x, y, z, roll, pitch, yaw]</code>，单位米/弧度，方向是 <strong>后雷达 → 前雷达</strong>。原 README 和独立 launch 的 <code>[0,0.4,0,-0.35453,0,0]</code> 与组件配置不同。以上仅抄录当前代码，不能直接当作你车的标定结果。</p>
+<p>融合开启后，原始两路点云被驱动内部消耗，主输出 <code>/livox/lidar</code> 为 <code>livox_ros_driver2/msg/CustomMsg</code>。IMU 仍按设备 IP 分话题，例如 <code>/livox/imu_192_168_1_135</code>。不能因为融合输出有数据就断定两颗雷达都在贡献点；还要观察后/前雷达 UDP、融合诊断和相应视场。</p>
+<p>如仅检查驱动、不启动 LIO，可运行组件节点：</p>
+<div class="codebox"><span class="lang">BASH</span><pre>ros2 run rclcpp_components component_container_mt \
+  --ros-args -r __node:=sensor_check_container
+# 另一个已 source 的终端
+ros2 component load /sensor_check_container \
+  livox_ros_driver2 livox_ros::DriverNode \
+  --param-file &quot;$HOME/navi_configs/driver_check.yaml&quot;</pre></div>
+<p>上述 driver_check.yaml 是你先复制好的驱动配置。组件 load 的参数文件通常按普通 ROS 参数解析，不保证展开 <code>$(find-pkg-share ...)</code>。运行前创建 <code>$HOME/navi_configs</code>，将组件 YAML 复制为 driver_check.yaml，并将 <code>user_config_path</code> 改为 JSON 的绝对路径；主 launch 使用 <code>ParameterFile(..., allow_substs=True)</code> 才明确支持该替换。不要同时运行此驱动和主驱动。</p>
+<p>外参不确定时，用 <code>dual_lidar_calibration</code> 离线标定。复制 <code>config/example.yaml</code>，填四个真实话题；采集时在驱动中关闭内部融合、保持 <code>multi_topic: 1</code>。记录两路未融合 CustomMsg 和两路 IMU，以有重叠特征、至少两个旋转轴的运动采样：</p>
+<div class="codebox"><span class="lang">BASH</span><pre>ros2 bag record -s mcap -o &quot;$HOME/navi_data/calibration_motion&quot; \
+  /livox/lidar_192_168_1_135 /livox/lidar_192_168_1_122 \
+  /livox/imu_192_168_1_135 /livox/imu_192_168_1_122
+ros2 run dual_lidar_calibration calibrate \
+  --bag &quot;$HOME/navi_data/calibration_motion&quot; \
+  --config /absolute/path/calibration.yaml \
+  --output &quot;$HOME/navi_data/calibration_result&quot;</pre></div>
+<p>MCAP 依赖见第 19 节。标定退出码 0 才表示质量门槛通过，2 表示完成但质量不通过，1 表示输入/运行错误。通过后检查 <code>summary.yaml</code>、<code>frame_results.csv</code> 和 <code>aligned_preview.pcd</code>，再将 <code>extrinsic.yaml</code> 中的数组写回驱动，恢复融合。只有单轴激励时可补 <code>--static-bag</code>，具体配置见该包 README。</p></section><section class="chapter" id="c09" style="--accent:#059669"><div class="eyebrow">DEPLOYMENT / MODULE 09</div><h2>09｜PTP、IMU 与点云时间同步</h2><p>Point-LIO 需要 IMU 时间覆盖当前点云最后一点的时刻。最新 IMU 时间不足时等待后续 IMU；消息频率高不代表时间新、队列小或算法无延迟。</p>
+<p>仓库 <code>scripts/ptp_sync.bash</code> 固定网卡 <code>enp86s0</code>，启动 <code>ptp4l</code> 和 <code>phc2sys</code>，并停止 NTP/chrony、清理原有 PTP 进程。先了解这些系统变更，再运行；它适用于有相应 PTP 能力的网卡和交换链路。</p>
+<div class="codebox"><span class="lang">BASH</span><pre>ethtool -T &quot;$NAVI_IFACE&quot;
+timedatectl
+pgrep -a ptp4l
+pgrep -a phc2sys
+# 将脚本 INTERFACE 改为实际网卡后，在单独终端
+sudo bash scripts/ptp_sync.bash</pre></div>
+<p>检查 <code>/tmp/ptp4l_&lt;网卡&gt;.log</code>、<code>/tmp/phc2sys_&lt;网卡&gt;.log</code> 的端口状态、时钟同步和报错。进程存在不等于 MID-360 已锁定主时钟；还要查看雷达状态与实际消息时间戳。网卡不支持硬件时间戳时，先确认可行的软件同步配置，不能照抄原脚本认为已同步。</p>
+<p>部署链先同步后启动传感器与算法，运行中避免突然调整系统时间。实机 <code>use_sim_time=false</code>；仿真和历史回放使用统一 <code>/clock</code>，两种时基不要混用。</p>
+<div class="codebox"><span class="lang">BASH</span><pre>ros2 topic echo /livox/lidar --once --field header \
+  --qos-reliability best_effort
+ros2 topic echo /livox/imu_192_168_1_135 --once --field header \
+  --qos-reliability best_effort
+ros2 param get /laserMapping common.time_diff_lidar_to_imu</pre></div>
+<p><code>time_diff_lidar_to_imu</code> 是时间校准量，不用于掩盖网络延迟或积压。区分采样时间、回调到达时间、计算开始/结束时间。传感器最后点时间需要结合 CustomMsg <code>timebase/offset_time</code>，不能只看 header 秒数是否接近。</p>
+<p>停止 PTP 后按原配置恢复 NTP/chrony，不要同时启动两个此前没有运行的授时服务。恢复操作应在导航已停止之后进行。</p></section><section class="chapter" id="c10" style="--accent:#059669"><div class="eyebrow">DEPLOYMENT / MODULE 10</div><h2>10｜Point-LIO：启动、输入验证与 TF</h2><p>推荐换车时使用通用 launch，显式指定本车主 IMU，避免双雷达包装 launch 写死 <code>.135</code>：</p>
+<div class="codebox"><span class="lang">BASH</span><pre>ros2 launch point_lio livox_pointlio_intra_process.launch.py \
+  driver_params_file:=&quot;$NAVI_WS/src/perception/livox_ros_driver2/config/mixed_MID360_component.yaml&quot; \
+  pointlio_params_file:=&quot;$NAVI_WS/src/perception/Point-LIO/config/mid360.yaml&quot; \
+  pointlio_imu_topic:=livox/imu_192_168_1_135 \
+  container_name:=livox_pointlio_container</pre></div>
+<p>替换 IMU 话题中的 IP。驱动 YAML 内的 JSON 地址仍需正确设置。<code>common.imu_topic</code> 的 launch 字典在 YAML 后加载，会覆盖 YAML 值。</p>
+<div class="codebox"><span class="lang">BASH</span><pre>ros2 component list
+ros2 node info /laserMapping
+ros2 param get /laserMapping common.lid_topic
+ros2 param get /laserMapping common.imu_topic
+ros2 topic info /livox/lidar -v
+ros2 topic hz /livox/lidar
+ros2 topic hz /livox/imu_192_168_1_135
+ros2 topic hz /aft_mapped_to_init</pre></div>
+<p>频率是观察结果；驱动配置 20 Hz、里程计上限 100 Hz，不保证实机一定达到。CLI 订阅也增加负载，QoS 不兼容时使用适配选项，先以 <code>topic info -v</code> 判断。</p>
+<table><thead><tr><th>参数族</th><th>当前例子</th><th>部署用途</th></tr></thead><tbody>
+<tr><td>输入</td><td><code>common.lid_topic</code>、<code>common.imu_topic</code></td><td>对准实际消息</td></tr>
+<tr><td>时间与预处理</td><td><code>preprocess.*</code>、<code>common.time_diff_lidar_to_imu</code></td><td>雷达类型、点时间单位、盲区、校时</td></tr>
+<tr><td>估计</td><td><code>mapping.extrinsic_T/R</code>、噪声和匹配参数</td><td>LiDAR-IMU 外参、运动估计</td></tr>
+<tr><td>性能</td><td><code>point_filter_num</code>、<code>filter_size_surf/map</code>、batch</td><td>点数、滤波与耗时</td></tr>
+<tr><td>发布 / 保存</td><td><code>odometry.*</code>、<code>publish.*</code>、<code>pcd_save.*</code></td><td>odom、点云、TF、地图保存</td></tr>
+</tbody></table>
+<p><code>use_imu_as_input: False</code> 不等于禁用 IMU；它是估计器的算法模式选择，IMU 是否启用看 <code>mapping.imu_en</code> 等真实逻辑。不要按参数名猜结论。</p>
+<p>当前输出：<code>/aft_mapped_to_init</code> 是 Odometry，父 <code>camera_init</code>、子 <code>body</code>；<code>/cloud_registered_full</code> 是去畸变世界系完整 PointCloud2；<code>/cloud_registered</code> 是常规配准点云。</p>
+<p><strong>项目 TF 并非通用机器人模板。</strong> Point-LIO 分别发布 <code>camera_init → body</code>、<code>camera_init → base_link</code>、<code>camera_init → slambase</code>；<code>base_link</code> 使用安装偏移且姿态为单位旋转，<code>slambase</code> 使用 yaw。不要另外发布同名变换，也不要凭常见框架假设它们是 <code>body → base_link</code>。</p>
+<div class="codebox"><span class="lang">BASH</span><pre>ros2 run tf2_ros tf2_echo camera_init body
+ros2 run tf2_ros tf2_echo camera_init base_link
+ros2 run tf2_ros tf2_echo camera_init slambase</pre></div>
+<p>先静止初始化，再人工平移和旋转观察：位姿连续、点云无明显双层/拖影、静止漂移可接受。没有 odom 时依次检查组件、两路输入、时间覆盖、初始化条件、处理队列与估计参数。不能用 odom 频率判断位姿是否滞后。</p></section><section class="chapter" id="c11" style="--accent:#ea580c"><div class="eyebrow">DEPLOYMENT / MODULE 11</div><h2>11｜地图准备、PCD 保存与二维转换</h2><table><thead><tr><th>文件</th><th>谁使用</th><th>应确认什么</th></tr></thead><tbody>
+<tr><td>PCD</td><td>GICP；部分环境先验/离线工具</td><td>米制坐标、真实几何、静态结构</td></tr>
+<tr><td>PGM + YAML</td><td>Nav2 map_server</td><td>resolution、origin、阈值与图片路径</td></tr>
+<tr><td>projection prior YAML</td><td>ROGMap 内部先验投影</td><td>与 map 坐标一致、障碍语义正确</td></tr>
+</tbody></table>
+<p>原比赛地图不适用于你的新场地。首次建图可先只运行驱动与 Point-LIO，开启 <code>pcd_save.pcd_save_en: true</code>，配置好间隔后重启。程序将点云写到编译时 <code>ROOT_DIR/PCD/</code>，通常对应 <code>src/perception/Point-LIO/PCD/</code>。</p>
+<p>达到间隔保存 <code>scans_1.pcd</code> 等；正常退出时如还有未保存点，析构函数写 <code>scans.pcd</code>。后者可能仅为剩余段，不保证包含之前全部分段。<code>interval: -1</code> 可能累计大量内存；长时间建图更适合分段保存，再经可靠配准/处理得到完整静态地图。Ctrl+C 正常退出，强制杀进程可能丢失尾段。</p>
+<h3>方法 A：CloudLab 处理与导出</h3>
+<div class="codebox"><span class="lang">BASH</span><pre>cd &quot;$NAVI_WS&quot;
+python3 -m http.server 8080 --directory src/utils/pcd_trans</pre></div>
+<p>浏览器打开 <code>http://127.0.0.1:8080/visual_point_cloud_lab.html</code>。导入 PCD → 检查方向和单位 → 裁剪/去噪 → 标记地面、墙体和障碍 → 生成并检查二维地图 → 下载处理后 PCD、PGM/YAML 及工程参数。高级算法需要 Open3D 后端，见第 23 节。</p>
+<h3>方法 B：pcd2pgm 与地图保存</h3>
+<p>修改 <code>src/utils/pcd2pgm/config/pcd.yaml</code>：<code>file_directory</code> 填绝对目录并带末尾 <code>/</code>，<code>file_name</code> 填不含 <code>.pcd</code> 的文件名；选择高度过滤与 <code>map_resolution</code>。<code>pcd2pgm</code> 生成并发布 <code>/map</code>，另用 map_saver 保存。</p>
+<div class="codebox"><span class="lang">BASH</span><pre>ros2 launch pcd2pgm pcd2pgm.launch.py use_sim_time:=false
+# 新终端：避免同时启动另一台发布 /map 的 map_server
+mkdir -p &quot;$NAVI_WS/maps/site_a&quot;
+ros2 run nav2_map_server map_saver_cli -t /map \
+  -f &quot;$NAVI_WS/maps/site_a/site_a&quot; --fmt pgm</pre></div>
+<p>原 launch 的 <code>use_sim_time</code> 默认 true，离线实机转换显式设 false。保存成功产生同名前缀 PGM/YAML；检查 YAML 的 <code>image</code> 指向存在文件。</p>
+<p><code>resolution</code> 决定米/像素；<code>origin</code> 决定二维栅格在 map 中的位置和朝向。整体平移优先查 origin x/y，整体旋转查 yaw/生成坐标处理，尺寸不一致查 resolution。所有来源地图必须同坐标、同尺度；可选点三个有明确对应的墙角验证距离和方向。</p>
+<p>配置本车地图时：GICP 的 <code>target_pcd_file</code> 指向处理后 PCD；Nav2 launch 的 <code>map</code> 指向本车 YAML；<code>sentry1.yaml</code> 中 <code>MincoPlanner.rog_map.projection.prior_map.yaml_path</code> 单独指向所需先验 YAML。<strong>只修改 launch 的 map 参数不会自动替换 ROGMap 内嵌先验。</strong></p></section><section class="chapter" id="c12" style="--accent:#ea580c"><div class="eyebrow">DEPLOYMENT / MODULE 12</div><h2>12｜GICP：初始配准、回退与重新定位</h2><p>编辑 <code>gicp_relocalization.yaml</code>：PCD 绝对路径、<code>initial_pose</code>、<code>default_pose_on_timeout</code>、裁剪范围与质量门槛必须依据本车。数组 <code>[x,y,z,roll,pitch,yaw]</code> 为米/弧度，描述 map 与局部坐标系的对齐；不是直接向机器人设置车体位姿。</p>
+<div class="codebox"><span class="lang">BASH</span><pre>ros2 launch icp_relocalization gicp_relocalization.launch.py \
+  gicp_config:=&quot;$NAVI_WS/src/perception/icp_relocalization/config/gicp_relocalization.yaml&quot;
+ros2 node info /gicp_relocalization_node
+ros2 run tf2_ros tf2_echo map camera_init</pre></div>
+<p>输入 <code>/cloud_registered_full</code>；输出 <code>map → camera_init</code> 的 TF。当前匹配频率配置 5 Hz、TF 发布 100 Hz；匹配还受累积窗口和状态机限制，两者不是同一个频率。</p>
+<p>当前稳定性要求三个独立累积窗口一致，并有归一化误差、内点比例、重叠比例和初值修正范围检查。<code>initial_pose_guard</code> 当前限制初值附近 0.4 m、0.2 rad；初始猜测太远，即使找到别处的匹配也可能被拒绝。先确认地图、初值和点云，再根据数据调门槛。</p>
+<table><thead><tr><th>状况</th><th>实际行为</th><th>验收判断</th></tr></thead><tbody>
+<tr><td>配准通过稳定性检查</td><td>日志 <code>Localization confirmed</code>；保存变换</td><td>再核对点云与地图重合</td></tr>
+<tr><td>连续重定位关闭（默认）</td><td>停匹配和点云订阅；继续发布保存的 TF</td><td>数值不变正常，不自动纠正后续 LIO 漂移</td></tr>
+<tr><td>初始化超时（配置 10 s）</td><td>使用 YAML 默认位姿；停止匹配；继续发布 TF</td><td>这是人工假设，不能作为定位成功</td></tr>
+<tr><td>服务触发重定位</td><td>重置状态，切到 multi_guess 并恢复点云输入</td><td>返回成功不等于后续匹配已成功</td></tr>
+</tbody></table>
+<p>当前 TF 发布辅助函数保留 x/y/yaw，z 为零，输出为平面定位语义。不要依靠它给坡道提供完整 6DoF 地图对齐。</p>
+<div class="codebox"><span class="lang">BASH</span><pre>ros2 service list -t
+ros2 service call /gicp_recall std_srvs/srv/Trigger &#x27;{}&#x27;</pre></div>
+<p>调用前停止导航与运动，按当前 <code>multi_guess.search_rectangles</code> 检查搜索区域，等待确认日志。默认区域仍是原车配置；调用 recall 不等于自动改用本车 initial_pose。</p>
+<p>debug 话题位于 <code>/gicp_relocalization_node/debug/</code>，包括 <code>source_raw</code>、<code>source_cropped</code>、<code>source_aligned</code>、<code>target_raw</code>、<code>target_cropped</code>。显示相同坐标系下的 source_aligned 与 target，核对墙、转角和地面，不能只凭 TF 存在判断正确。CSV 开关为 <code>results.enable</code>，记录路径确保可写。</p></section><section class="chapter" id="c13" style="--accent:#7c3aed"><div class="eyebrow">DEPLOYMENT / MODULE 13</div><h2>13｜Nav2、ROGMap 与 MINCO 的启动验收</h2><p>先确认 <code>/livox_pointlio_container</code> 存在、Point-LIO 正常、GICP 对齐已验证。导航会把 planner_server 加载到该容器；不能在没有这个容器时只启动导航并期待 planner 自动出现。</p>
+<div class="codebox"><span class="lang">BASH</span><pre>cd &quot;$NAVI_WS&quot;
+ros2 launch navi2 navigation2.launch.py \
+  use_sim_time:=false \
+  params_file:=&quot;$NAVI_WS/src/navigation/navi2_bringup/params/sentry1.yaml&quot; \
+  map:=&quot;$NAVI_WS/maps/site_a/site_a.yaml&quot;</pre></div>
+<p>本车地图尚未生成时，不能直接使用上述 site_a 路径。使用原地图仅做对应场地的源码/仿真检查。导航同时 include 官方 localization launch，启动 map_server、AMCL 等；AMCL 默认需要对应二维扫描输入，本仓库主链没有已核实的有效 scan 来源，不能把 AMCL 存在当作主定位工作正常。当前主定位由 Point-LIO + GICP 提供；检查是否出现重复 TF 发布者。</p>
+<div class="codebox"><span class="lang">BASH</span><pre>ros2 component list
+ros2 lifecycle get /planner_server
+ros2 lifecycle get /controller_server
+ros2 lifecycle get /bt_navigator
+ros2 lifecycle get /map_server
+ros2 param get /planner_server planner_plugins
+ros2 param get /planner_server MincoPlanner.plugin
+ros2 action list -t
+ros2 run tf2_ros tf2_echo map base_link</pre></div>
+<p>预期关键生命周期节点为 active，规划器列表包含 <code>MincoPlanner</code>，插件字符串 <code>minco_planner/MincoPlanner</code>，控制器插件 <code>minco_controller::MincoMpcController</code>。组件名、插件实例标识、注册类名称有区别，不要改成看起来相似的名称。</p>
+<p>激活失败先看 lifecycle_manager 与首个失败节点日志，不对所有节点反复手动 activate。插件创建失败分“找不到类/库”和“初始化参数/资源失败”。后者常见于先验 YAML、PCD 或行为树 XML 路径无效。</p>
+<p>ROGMap 是 MINCO 内部对象，配置在 <code>planner_server.ros__parameters.MincoPlanner.rog_map</code>。当前以 <code>/cloud_registered_full</code> 和 <code>/aft_mapped_to_init</code> 为输入，坐标 <code>camera_init</code>，分辨率 0.05 m、滑窗 10×10×1.5 m。<code>projection.prior_map</code> 提供静态二维障碍，在线占据与先验保守合并，先验不用于清除在线障碍。</p>
+<p>主要显示：<code>/rog_map/occupied</code>、<code>/rog_map/layer_value</code>、<code>/rog_map/layer_height_delta</code>、<code>/rog_map/field</code>；类型与完整名称在实机 <code>ros2 topic list -t</code> 核实。部分可视化只在有订阅者时构造发布，没有订阅时不发不等于地图没更新。</p>
+<p>默认 <code>PRIORMAP</code> 在 map 下搜索/输出，<code>EXPLORATION</code> 在 camera_init 下运行，不能只切换模式而忽略目标坐标、地图边界和对应配置。<code>/opt_path</code> 是自定义轨迹消息；<code>/opt_path_vis</code> 仅用于显示，不能代替控制输入。</p></section><section class="chapter" id="c14" style="--accent:#7c3aed"><div class="eyebrow">DEPLOYMENT / MODULE 14</div><h2>14｜目标调用、规划验证与取消</h2><p>基础导航先不启动比赛 bt_manager，避免它与人工目标竞争。确认目标位于可通行区域，frame 为 map。RViz 使用项目配置的导航目标工具；<code>2D Pose Estimate</code> 一般面向 AMCL，不等于给本项目 GICP 设置初值。</p>
+<h3>调用完整导航</h3>
+<div class="codebox"><span class="lang">BASH</span><pre>ros2 action info /navigate_to_pose
+ros2 action send_goal /navigate_to_pose nav2_msgs/action/NavigateToPose \
+  &#x27;{pose: {header: {frame_id: map}, pose: {position: {x: 1.0, y: 1.0, z: 0.0}, orientation: {x: 0.0, y: 0.0, z: 0.0, w: 1.0}}}}&#x27; \
+  --feedback</pre></div>
+<p><code>(1,1)</code> 是语法示例，必须换成当前地图中实际可达目标。四元数 <code>(0,0,0,1)</code> 表示 yaw=0；平面 yaw 对应 z=sin(yaw/2)、w=cos(yaw/2)。默认目标朝向验收阈值较宽（<code>yaw_goal_tolerance: 6.28</code>），不能认为到达目标必然精确朝向给定 yaw。</p>
+<h3>检查规划与控制输出</h3>
+<div class="codebox"><span class="lang">BASH</span><pre>ros2 topic echo /opt_path --once --field header
+ros2 topic echo /opt_path_vis --once --field header
+ros2 topic hz /cmd_vel_mpc
+ros2 topic echo /cmd_vel_mpc</pre></div>
+<p>观察顺序：目标被 action 接受 → Nav2 获取当前位姿 → planner 搜索与 MINCO FSM 优化 → <code>/opt_path</code> 参考生成 → MPC 产生速度。仅看屏幕上的一条路径不能确认当前轨迹有效、时间匹配或控制已经执行。</p>
+<p>只调用全局路径接口的示例：</p>
+<div class="codebox"><span class="lang">BASH</span><pre>ros2 action send_goal /compute_path_to_pose nav2_msgs/action/ComputePathToPose \
+  &#x27;{goal: {header: {frame_id: map}, pose: {position: {x: 1.0, y: 1.0}, orientation: {w: 1.0}}}, planner_id: MincoPlanner, use_start: false}&#x27; \
+  --feedback</pre></div>
+<p>这不启动完整 FollowPath；但本项目规划插件还有内部 FSM 与轨迹发布，不能把该接口当作绝对没有控制侧影响的纯离线计算。进行单模块测试时保持通信与底盘执行关闭。</p>
+<h3>取消与停止验证</h3>
+<p>通过 action 的 cancel 服务取消当前导航（该示例取消全部 navigate_to_pose 目标，不取消其他 action）：</p>
+<div class="codebox"><span class="lang">BASH</span><pre>ros2 service call /navigate_to_pose/_action/cancel_goal \
+  action_msgs/srv/CancelGoal \
+  &#x27;{goal_info: {goal_id: {uuid: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]}, stamp: {sec: 0, nanosec: 0}}}&#x27;</pre></div>
+<p>核对 <code>goals_canceling</code>、action 结果和真实速度；返回成功不能代替停车测试。Ctrl+C 退出客户端不保证自动取消 action。当前 MCU 是否收到清零、断流后是否自动停车必须实测；通信缓存可能保留最后一次速度，停止 ROS 进程不是可靠急停。</p></section><section class="chapter" id="c15" style="--accent:#0891b2"><div class="eyebrow">DEPLOYMENT / MODULE 15</div><h2>15｜舵轮底盘：坐标、单位、串口与方向测试</h2><p>已知你的底盘直接接收 vx、vy，但还未确认是车体系还是世界系，也未拿到电控协议。这是接车前必须确定的事实，不能只凭“接受 vx/vy”认定兼容。</p>
+<p>当前计算链：<code>/opt_path</code> 在 map → MPC 转到局部 costmap 的 global_frame（默认 camera_init）→ <code>/cmd_vel_mpc</code> 为该世界系 vx、vy，角速度单位 rad/s。Twist 无 header，话题自身没有附带 frame；语义由项目约定决定。</p>
+<p>源码 <code>communication/include/com_interface_ros.hpp</code> 直接读取 <code>linear.x/y</code>，未在打包处旋转 vx/vy；angular.z 乘 <code>60/(2π)</code> 得 rpm；odom yaw 转为度，再与 <code>delta_yaw</code> 等字段打包。<code>custom_protocol.hpp</code> 的 current_yaw 注释写 rad，与赋值实现的度不一致，联调以实际编码和 MCU 解码共同确认。</p>
+<table><thead><tr><th>需要电控确认</th><th>本项目发送侧事实</th><th>本车协议</th></tr></thead><tbody>
+<tr><td>vx、vy 坐标系</td><td>camera_init 世界系</td><td>__________</td></tr>
+<tr><td>平移单位</td><td>m/s</td><td>__________</td></tr>
+<tr><td>旋转速度</td><td>打包后 rpm；ROS 侧 rad/s</td><td>__________</td></tr>
+<tr><td>current_yaw</td><td>赋值为度</td><td>__________</td></tr>
+<tr><td>delta_yaw 用途/符号</td><td>提供 odom 与底盘 IMU 的朝向偏差</td><td>__________</td></tr>
+<tr><td>字节序、字段排列、对齐、CRC、包号</td><td>当前协议结构与打包实现</td><td>__________</td></tr>
+<tr><td>超时停车、急停、速度限幅</td><td>MCU 实现尚未提供</td><td>__________</td></tr>
+</tbody></table>
+<p>若 MCU 接收车体系，需要在确定的一层做一次转换：</p>
+<div class="codebox"><span class="lang">TEXT</span><pre>vx_body = cos(yaw) * vx_world + sin(yaw) * vy_world
+vy_body = -sin(yaw) * vx_world + cos(yaw) * vy_world</pre></div>
+<p>这里 yaw 是车体相对该世界系的朝向。不能用 map yaw 去转换 camera_init 速度而忽略坐标旋转；不要在 NUC 与 MCU 两端重复转换。</p>
+<h3>串口接入</h3>
+<div class="codebox"><span class="lang">BASH</span><pre>ls -l /dev/serial/by-id/
+ls -l /dev/ttyACM*
+id -nG
+sudo usermod -aG dialout &quot;$USER&quot;</pre></div>
+<p>加入用户组后重新登录。当前 <code>/dev/ttyACM0</code>、115200 写在 <code>communication/src/com.cpp</code>，不是 YAML 参数。若设备名不同，应明确修改源码或制定稳定设备链接；修改源码后要重新构建。仅接串口不代表包协议兼容。</p>
+<p>基础协议已确认后启动：</p>
+<div class="codebox"><span class="lang">BASH</span><pre>ros2 launch communication com.launch.py
+ros2 node info /communication_sentry
+ros2 topic echo /sentry/offline_info --once</pre></div>
+<p>launch 设置 respawn=true，故障会重启；用 Ctrl+C 结束整个 launch，不只杀子节点。缺少底盘 IMU/odom 时间匹配时，代码会提示 <code>delta_yaw is not initialized</code> 并压制平移；不是看到 cmd_vel 有值就保证能动。</p>
+<h3>低速方向与停止测试</h3>
+<p>关闭比赛树与导航目标、停止控制器输出，确认只有一个速度发布者；先在允许测试的场地以物理急停/MCU超时停车保护。每次只测一个轴，小速度如 0.1 m/s 和 0.2 rad/s，仅为测试样例，以本车最低稳定速度为准。</p>
+<div class="codebox"><span class="lang">BASH</span><pre>ros2 topic info /cmd_vel_mpc -v
+# 在无人为/自动速度竞争且底盘保护就绪时，持续 2 秒
+timeout 2s ros2 topic pub -r 20 /cmd_vel_mpc geometry_msgs/msg/Twist \
+  &#x27;{linear: {x: 0.1, y: 0.0}, angular: {z: 0.0}}&#x27;
+# 随后持续发布零；真正停止仍需确认 MCU 执行
+timeout 2s ros2 topic pub -r 20 /cmd_vel_mpc geometry_msgs/msg/Twist &#x27;{}&#x27;</pre></div>
+<p>分别测试 +X、+Y、正转，记录世界系方向、车头方向和 MCU 接收值；车体旋转 90° 后重复测试，确认世界/车体语义一致。再验证取消、掉线和重启的停止行为。未确认坐标与看门狗前，不接入自动导航。</p></section><section class="chapter" id="c16" style="--accent:#0891b2"><div class="eyebrow">DEPLOYMENT / MODULE 16</div><h2>16｜比赛行为树：何时启动、如何调用</h2><p>比赛 <code>bt_manager</code> 与 Nav2 内部导航行为树是两层：前者选择战术与任务，后者执行一次导航目标。基础部署和人工目标测试不必启动比赛树。</p>
+<p>入口：<code>src/decision/bt_manager/launch/bt_manager.launch.py</code>；运行代码加载 tree 目录中的 tactical、nav、stance、resource、gimbal XML。blackboard 共享比赛状态、目标、姿态与资源指令；当前 XML 中注释掉的策略不等于运行功能。</p>
+<div class="codebox"><span class="lang">BASH</span><pre>ros2 launch bt_manager bt_manager.launch.py \
+  bt_debug_logs:=true bt_debug_log_to_file:=false \
+  publish_area_markers:=true
+ros2 node info /bt_manager_node
+ros2 topic echo /sentry/game_info --once
+ros2 topic echo /sentry/behaivor_send --once</pre></div>
+<p><code>behaivor_send</code> 是代码中的实际拼写，不能自行改成 behavior_send 后期待已有订阅能接收。比赛树依赖裁判/通信输入、区域与任务点，换场地要核对相关坐标和 map→minimap。导航 launch 里的静态 map→minimap 是原赛场设置，不能直接用于新场地。</p>
+<p>使用步骤：先验证 communication 接收状态 → 核对 blackboard 对应值 → 观察状态变化日志与区域 Marker → 确认发送的目标和行为指令 → 再允许底盘执行。人工发目标前暂停/退出策略源，避免它持续覆盖你的目标。停止树不保证取消已提交 Nav2 action，需要按第 14 节取消并核实停车。</p>
+<p>可编辑入口：tree/*.xml 定义条件和优先级；注册的 C++ action/condition 定义实际行为；<code>ros_interface</code> 写入状态。不要只改 XML 名称或话题；枚举、blackboard、协议字段和 MCU 接收要同步核对。</p></section><section class="chapter" id="c17" style="--accent:#2563eb"><div class="eyebrow">DEPLOYMENT / MODULE 17</div><h2>17｜仿真：无硬件验证导航闭环</h2><p>仿真可先验证算法链和调用方式，但当前 omni 模型是 Fortress MecanumDrive，并不是舵轮转向动力学模型；不能代替舵轮执行延迟与机构约束测试。</p>
+<div class="codebox"><span class="lang">BASH</span><pre>sudo apt install -y ros-humble-ros-gz ignition-fortress \
+  libignition-gazebo6-dev
+source /opt/ros/humble/setup.bash
+source &quot;$NAVI_WS/install/setup.bash&quot;
+ros2 pkg prefix ros_gz_sim
+ros2 pkg prefix ros_gz_bridge
+ign gazebo --versions
+cd &quot;$NAVI_WS&quot;
+bash simlation.bash omni rmuc_2025 --check
+bash simlation.bash omni rmuc_2025</pre></div>
+<p><code>--check</code> 仅检查依赖和环境，不启动、不验证闭环。所有包仍须先构建成功。支持脚本参数 omni/diff，world 当前脚本只接受 rmuc_2024、rmul_2024、rmuc_2025、rmul_2025。README 声称可传 rmuc_2026，但这个 shell 脚本会拒绝；2026 资源与 launch 配置存在，完整几何及导航质量未在本次验收。</p>
+<div class="codebox"><span class="lang">BASH</span><pre># 无界面但保留算法闭环
+bash simlation.bash omni rmuc_2025 --headless --no-rviz
+# 如需指定关闭 ICP，直接使用 launch
+ros2 launch sentry_simulation simulation.launch.py \
+  chassis_type:=omni world:=rmuc_2025 use_icp:=false</pre></div>
+<p>脚本检查 package 并设置模型资源路径。仿真使用独立 <code>config/nav2_sim.yaml</code>、<code>point_lio_sim.yaml</code>、<code>gicp_sim.yaml</code>，修改实车 sentry1.yaml 不会自动改变它们。</p>
+<p>主链：模拟双雷达/IMU → bridge 与 CustomMsg 适配 → Point-LIO → 重定位 → Nav2/MINCO/MPC → 仿真速度适配器 → 模型。不会启动真实 communication、裁判链或真车下位机。</p>
+<p>验收：<code>/clock</code> 前进、算法节点使用 sim time、输入存在、Point-LIO 位姿更新、导航 action 被接受、轨迹与控制产生、模型运动。<code>/sim/ground_truth/odom</code> 只用于误差评价，不替代定位输入。用第 14 节目标与取消命令，目标坐标按仿真地图填写。</p>
+<p>不要同时启动实机 Livox 和仿真传感器，避免同名话题混合；关闭仿真速度适配器不能当作真实 MCU 停车测试。</p></section><section class="chapter" id="c18" style="--accent:#2563eb"><div class="eyebrow">DEPLOYMENT / MODULE 18</div><h2>18｜Foxglove：本机、Windows 远程和三套面板</h2><p>按 <a href="https://docs.foxglove.dev/docs/getting-started/frameworks/ros2">Foxglove ROS 2 官方接入说明</a> 安装 bridge。NUC 已 source 本工程后：</p>
+<div class="codebox"><span class="lang">BASH</span><pre>sudo apt install -y ros-humble-foxglove-bridge
+ros2 launch foxglove_bridge foxglove_bridge_launch.xml \
+  port:=8765 address:=0.0.0.0
+ss -ltnp | rg 8765</pre></div>
+<p>本机客户端连接 <code>ws://localhost:8765</code>；Windows 连接 <code>ws://NUC可达IP:8765</code>。Windows 无需另装 ROS 来使用 WebSocket。PowerShell 用 <code>Test-NetConnection NUC地址 -Port 8765</code> 检查；确保在同一可达局域网，按已有防火墙策略仅允许所需连接。</p>
+<table><thead><tr><th>布局</th><th>面板与数据</th><th>用途</th></tr></thead><tbody>
+<tr><td>传感器 / 定位</td><td>Raw CustomMsg/IMU，3D cloud_registered_full，TF，odom Plot</td><td>输入、时间、外参、漂移</td></tr>
+<tr><td>地图 / 规划</td><td>3D PCD/ROGMap，opt_path_vis、astar_path_vis，日志</td><td>对齐、障碍表达与轨迹</td></tr>
+<tr><td>控制 / 性能</td><td>cmd_vel_mpc 与 odom 速度曲线，预测路径、CSV</td><td>跟踪、延迟、抖动、超调</td></tr>
+</tbody></table>
+<p>Raw Messages 看 <code>/livox/lidar</code> 的字段；3D 优先显示标准 PointCloud2 <code>/cloud_registered_full</code>。自定义 <code>/opt_path</code> 不直接等同 Path，显示用 <code>/opt_path_vis</code>。odom twist 的体轴速度与 cmd_vel 的世界系速度不能未经转换直接逐轴比较。</p>
+<p>有点云却看不见：先启用该话题、确认 frame_id，再用 camera_init 参考系显示；局部显示成功、切 map 失败，检查 GICP TF 与时间戳。数据离屏、裁剪、尺寸、颜色设置也可能影响显示。旧回放时间与实时 TF 混用会造成查不到变换。</p>
+<p>布局通过客户端导出保存到 <code>learning/foxglove/</code>，记录实际话题和参考系。发目标先核对发布面板类型、frame 及订阅端，不默认所有点击工具都等价于 RViz Nav2 action。更多设置见 <code>learning/foxglove/README.md</code>。</p>
+<p>CloudLab 后端也默认占用 8765（HTTP），与 bridge WebSocket 端口冲突；不要在同一主机同端口同时启动，必要时将 bridge 改为 8766 并同步修改客户端 URL。</p></section><section class="chapter" id="c19" style="--accent:#2563eb"><div class="eyebrow">DEPLOYMENT / MODULE 19</div><h2>19｜MCAP 录制、离线查看与证据保存</h2><p>Humble 默认 db3 不保存完整自定义消息定义，Foxglove 离线查看自定义消息更适合 MCAP。安装和格式说明见 <a href="https://docs.foxglove.dev/docs/getting-started/frameworks/ros2">Foxglove 官方录制说明</a>；录制程序必须先 source 本工程。</p>
+<div class="codebox"><span class="lang">BASH</span><pre>sudo apt install -y ros-humble-rosbag2-storage-mcap
+mkdir -p &quot;$HOME/navi_data/bags&quot;
+ros2 bag record -s mcap \
+  -o &quot;$HOME/navi_data/bags/run_$(date +%Y%m%d_%H%M%S)&quot; \
+  /tf /tf_static /aft_mapped_to_init /cloud_registered_full \
+  /opt_path /opt_path_vis /cmd_vel_mpc</pre></div>
+<p>需要重新计算定位时，再加入 <code>/livox/lidar</code> 与实际主 IMU 话题；两路外参标定需要未融合的两路点云和两路 IMU。仿真额外录 <code>/clock</code>、<code>/sim/ground_truth/odom</code>，录制节点使用 <code>--use-sim-time</code>，先确认 <code>/clock</code> 已到达。</p>
+<p>Ctrl+C 正常结束 recorder，确认 metadata.yaml 和 mcap 文件完整：</p>
+<div class="codebox"><span class="lang">BASH</span><pre>ros2 bag info /absolute/path/to/bag_directory</pre></div>
+<p>打开 <code>.mcap</code> 到 Foxglove，可以查看已经录下的结果。这不等于重新跑算法。重新计算流程见第 20 节。稠密点云录制会增加磁盘和 CPU 负载，实验必须记录录包/可视化是否启用，避免观察工具改变性能比较条件。</p>
+<p>每次保存：源码提交、依赖版本、参数副本、地图校验、路线/初始状态、硬件外参、实验结论。大包放在 <code>$HOME/navi_data</code> 等独立目录，仓库只记录路径，不把数 GB 数据直接放 learning。</p></section><section class="chapter" id="c20" style="--accent:#2563eb"><div class="eyebrow">DEPLOYMENT / MODULE 20</div><h2>20｜传感器回放：让算法重新计算</h2><p>目标是使用固定原始传感器数据验证参数或算法。先断开底盘执行、退出真实 Livox 驱动和比赛策略，不把历史控制话题直接重放到真实底盘。</p>
+<ol>
+<li>从 <code>ros2 bag info</code> 确认 CustomMsg 与主 IMU 已录制，话题类型与名称正确。</li>
+<li>复制 Point-LIO 配置，在 <code>ros__parameters</code> 中设 <code>use_sim_time: true</code>，话题指向 bag 原始输入；复制 GICP 配置同样设置 sim time。</li>
+<li>检查独立 Point-LIO launch 的输入覆盖逻辑；用它启动 LIO，避免主组合 launch 同时启动真实驱动。</li>
+</ol>
+<div class="codebox"><span class="lang">BASH</span><pre>ros2 launch point_lio point_lio.launch.py --show-args
+ros2 launch point_lio point_lio.launch.py \
+  point_lio_cfg_dir:=&quot;$HOME/navi_configs/point_lio_replay.yaml&quot; \
+  rviz:=false</pre></div>
+<p>当前独立 launch 支持 <code>point_lio_cfg_dir</code>，运行 <code>pointlio_mapping</code>，只启动 LIO，不启动真实驱动。上面的 replay.yaml 是提前复制并修改好的配置；直接写 <code>use_sim_time:=true</code> 到 launch 命令并不会替代未声明的参数，需在该 YAML 里配置。节点名与组件入口可能不同，用 <code>ros2 node list</code> 核实。</p>
+<p>随后只播放原始输入，并由 bag 提供 ROS 时钟：</p>
+<div class="codebox"><span class="lang">BASH</span><pre>ros2 bag play /absolute/path/to/raw_bag --clock \
+  --topics /livox/lidar /livox/imu_192_168_1_135</pre></div>
+<p>不要同时播放旧 <code>/aft_mapped_to_init</code>、旧点云输出和旧 <code>/tf</code>，否则它们会与新计算结果混合。需要导航回放时使用 <code>use_sim_time:=true</code> 启动导航，所有节点必须采用同一时基，禁用真实通信。</p>
+<p>传感器 QoS 不兼容时先查看订阅/播放 QoS，按 <a href="https://github.com/ros2/rosbag2/tree/humble">rosbag2 Humble 官方说明</a> 使用 override 文件。比较结果必须使用同一播放速度、同一初值、同一数据及参数。系统当前时间减历史 header 时间，不是算法延迟。</p></section><section class="chapter" id="c21" style="--accent:#db2777"><div class="eyebrow">DEPLOYMENT / MODULE 21</div><h2>21｜每天启动、停止、重启与版本记录</h2><h3>每次开机</h3>
+<ol>
+<li>检查供电、急停和下位机状态；确认本车设备表与配置一致。</li>
+<li>打开各终端，source Humble 与唯一正确工作空间，cd 到仓库根目录。</li>
+<li>确认网卡地址、两颗雷达 UDP 和时钟策略；启动时间同步。</li>
+<li>启动驱动/LIO，静止初始化；检查消息与局部点云。</li>
+<li>启动 GICP，确认正确配准且未回退；检查 map→base_link。</li>
+<li>启动导航，确认 lifecycle active 和目标链。</li>
+<li>底盘协议已验收后启动 communication；确认 yaw 匹配与反馈。</li>
+<li>按任务启动 Foxglove/录包；最后才启动比赛树。</li>
+</ol>
+<h3>正常停止</h3>
+<p>先暂停策略目标源，取消导航 action，确认速度清零和实车停止；然后结束策略、导航、communication、GICP、LIO、录包与 PTP。必须依赖下位机看门狗/物理急停处理断流，不能只关闭终端。保存 PCD 时需等待 LIO 正常析构；录包正常 Ctrl+C 保存 metadata。</p>
+<h3>一键脚本的使用边界</h3>
+<p><code>start.bash</code> 固定 <code>cd ~/2027-sentry-navi</code>，GNOME 桌面开多个终端；固定 sleep 不验证节点 ready，且会自动启动比赛树和通信。首次部署完成后，可自己备份并调整工作路径、PTP 网卡、地图/参数入口和启动顺序。不在无桌面 SSH 环境直接使用该脚本。</p>
+<p>当前 start 的 cloud crop、Foxglove 和 rosbag 命令被注释，不会自动运行。<code>scripts/pcd.bash</code>、<code>play.bash</code> 含旧工作目录和另一套驱动入口，不作为本文推荐部署入口。</p>
+<h3>保存可复现记录</h3>
+<div class="codebox"><span class="lang">BASH</span><pre>mkdir -p &quot;$HOME/navi_data/deployment_$(date +%Y%m%d)&quot;
+git rev-parse HEAD
+git diff --stat
+ros2 pkg prefix --share navi2
+ros2 param dump /laserMapping
+ros2 param dump /planner_server
+ros2 param dump /controller_server
+sha256sum /absolute/path/site_a.pcd /absolute/path/site_a.pgm \
+  /absolute/path/site_a.yaml</pre></div>
+<p>把输出与参数副本、设备表、bag 路径一起保存。只记录提交号而不记录未提交配置，会遗漏真实运行版本。后续更新源码前保留工作区修改，不用覆盖本车配置的命令“恢复默认”。</p></section><section class="chapter" id="c22" style="--accent:#db2777"><div class="eyebrow">DEPLOYMENT / MODULE 22</div><h2>22｜故障速查：从现象定位模块</h2><table><thead><tr><th>现象</th><th>首先检查</th><th>后续证据与处理</th></tr></thead><tbody>
+<tr><td>雷达 ping 不通</td><td>供电、网卡、掩码、路由和真实 IP</td><td>ip route get；设备工具确认 IP</td></tr>
+<tr><td>ping 通但无点云</td><td>JSON 主机接收 IP、UDP、端口占用</td><td>tcpdump、ss、驱动日志；ping 不是全链验收</td></tr>
+<tr><td>合并点云缺一侧</td><td>两路 UDP、配对时间、融合诊断</td><td>IP 选错、丢包或窗口不足；不要只看合并频率</td></tr>
+<tr><td>点云正常无 odom</td><td>组件、主 IMU 订阅、时间覆盖和初始化</td><td>node info、param get、时间戳、队列</td></tr>
+<tr><td>odom 有频率但机器人位置滞后</td><td>输入到达、同步等待、计算耗时与队列</td><td>平均/p95/p99、状态时间；频率不代表新鲜</td></tr>
+<tr><td>旋转时点云重影</td><td>双雷达外参、时间与去畸变</td><td>同场景静止/旋转对照，不先调规划权重</td></tr>
+<tr><td>局部点云清晰但整片地图错位</td><td>GICP 地图、初值、回退</td><td>确认日志、source_aligned/target 和 CSV</td></tr>
+<tr><td>map TF 一直有但位置错误</td><td>是否默认位姿、配准质量</td><td>TF 存在只说明坐标链可查询</td></tr>
+<tr><td>TF future/past extrapolation</td><td>请求时间、发布时钟、缓存范围</td><td>检查 sim time、历史 bag、变换更新时间</td></tr>
+<tr><td>PCD 对齐但 PGM 平移</td><td>二维 YAML origin x/y</td><td>不调整 resolution 去补平移</td></tr>
+<tr><td>PGM 尺寸与 PCD 不一致</td><td>resolution 与地图生成尺度</td><td>核对已知墙角距离</td></tr>
+<tr><td>planner 不在节点列表</td><td>目标容器、组件插件与安装环境</td><td>component list、加载日志</td></tr>
+<tr><td>planner 存在但 unconfigured</td><td>规划插件、资源路径、初始化错误</td><td>YAML 插件与注册 XML 一致；首个错误</td></tr>
+<tr><td>目标被拒绝 / 不产生轨迹</td><td>生命周期、action、TF、可通行目标</td><td>看 ComputePath 与 FSM，地图输入超时</td></tr>
+<tr><td>有 opt_path_vis 但无 cmd_vel_mpc</td><td>实际 opt_path、MPC 状态、TF、求解</td><td>不能拿显示消息代替控制参考</td></tr>
+<tr><td>cmd_vel 有值底盘不动</td><td>通信订阅、串口反馈、delta_yaw</td><td>打包结果、MCU 解码/使能、协议一致性</td></tr>
+<tr><td>速度方向与车头不符</td><td>世界/车体约定、yaw 符号、重复旋转</td><td>固定轴、车体转90°、单轴低速测试</td></tr>
+<tr><td>取消后仍运动</td><td>目标是否取消、最后命令缓存、MCU看门狗</td><td>物理停止后查发送零与断流行为</td></tr>
+<tr><td>Foxglove 连不上</td><td>bridge监听、IP路由、端口和冲突</td><td>ss、Windows Test-NetConnection、CloudLab8765</td></tr>
+<tr><td>录包自定义消息看不到</td><td>source正确工程、MCAP schema</td><td>不仅是文件后缀问题</td></tr>
+</tbody></table>
+<p>网络诊断脚本示例（按当前 JSON 的主机点云端口 56300 覆盖脚本默认 56301）：</p>
+<div class="codebox"><span class="lang">BASH</span><pre>sudo bash scripts/monitor_livox_network.sh \
+  --lidar-ip 192.168.1.122 --interface &quot;$NAVI_IFACE&quot; \
+  --host-point-port 56300 --duration 60</pre></div>
+<p>Point-LIO 性能开关 <code>runtime_pos_log_enable</code>，路径默认 <code>/tmp/point_lio_log</code>；MINCO、ROGMap、MPC 的 performance 参数分别在自身命名空间中。通信诊断可单独运行 <code>ros2 run communication communication --ros-args -p communication.enable_performance_diagnostics:=true</code>，不要与已有通信 launch 重复启动。</p></section><section class="chapter" id="c23" style="--accent:#db2777"><div class="eyebrow">DEPLOYMENT / MODULE 23</div><h2>23｜辅助功能调用卡</h2><p>每张卡按“输入/配置 → 调用 → 输出 → 核对”使用。不是所有工具都位于默认主链中。</p>
+<h3>点云裁剪过滤：msg_convert</h3>
+<p>输入 <code>/cloud_registered</code>，默认输出 <code>/cloud_registered_filtered</code>；配置 <code>src/perception/msg_convert/config/cloud_registered_crop_filter.yaml</code>。默认 box 与 map 坐标来自原比赛场地，先替换区域，再运行：</p>
+<div class="codebox"><span class="lang">BASH</span><pre>ros2 launch msg_convert cloud_registered_crop_filter.launch.py
+ros2 topic info /cloud_registered_filtered -v</pre></div>
+<p>检查 remove_inside、position_frame、z_offset、盒子 Marker。仅启动过滤节点不会自动让规划器改订阅 filtered；需要明确修改所需下游配置。ROGMap 内部 cloud_filter 是另一处理入口，当前默认关闭，不要无意双重过滤。</p>
+<h3>DBSCAN 障碍聚类：dbscan_cluster</h3>
+<p>配置 <code>config/dbscan_cluster.params.yaml</code>，默认输入 <code>/cloud_registered</code>，输出 <code>/clustered_obstacles</code>。高度范围、簇尺寸和动态阈值是原车值。</p>
+<div class="codebox"><span class="lang">BASH</span><pre>ros2 launch dbscan_cluster dbscan_cluster.launch.py
+ros2 node info /dbscan_cluster_node
+ros2 topic info /clustered_obstacles -v</pre></div>
+<p>观察分簇、关联和丢失帧；本次未确认该输出已经接入 MINCO 主链，不把启动聚类当作自动获得规划动态障碍功能。</p>
+<h3>高程图：pcd2ele</h3>
+<p>修改 <code>config/pcd2ele.yaml</code> 的 pcd_file_path、output_folder、output_name、resolution 与过滤参数，输出目录先创建：</p>
+<div class="codebox"><span class="lang">BASH</span><pre>ros2 launch pcd2ele pcd2ele.launch.py use_sim_time:=false</pre></div>
+<p>检查实际生成的高程文件与日志。该 launch 默认 sim time true；本节显式覆盖。不把离线高程工具当作正在导航的 ROGMap 地形投影。</p>
+<h3>二维距离场：pcd2esdf</h3>
+<p>虽然包名叫 pcd2esdf，当前节点 <code>pgm2esdf_generator</code> 从地图 YAML/图片生成 ESDF PCD。改 <code>config/pcd2esdf.yaml</code> 的 map_yaml、output_pcd、占据阈值和 unknown 策略：</p>
+<div class="codebox"><span class="lang">BASH</span><pre>ros2 launch pcd2esdf pcd2esdf.launch.py</pre></div>
+<p>核对输出路径与距离值符号、截断范围；它与规划器内部实时 ESDF 是不同生成路径，不会因导出文件自动替换在线距离场。</p>
+<h3>CloudLab 高级处理</h3>
+<p>基础页面见第 11 节。高级后端需要 NumPy、Open3D；推荐使用单独 Python 虚拟环境，避免污染 ROS Python：</p>
+<div class="codebox"><span class="lang">BASH</span><pre>python3 -m venv &quot;$HOME/navi_deps/cloudlab_env&quot;
+source &quot;$HOME/navi_deps/cloudlab_env/bin/activate&quot;
+python -m pip install numpy open3d
+python src/utils/pcd_trans/point_cloud_lab_server.py</pre></div>
+<p>缺少 venv 时安装 python3-venv。压缩 PCD、去噪、聚类、动态残影和网格处理按页面入口使用；STEP 额外需要 FreeCAD。后端默认127.0.0.1:8765，仅本机；处理结果需要页面确认下载，不自动修改导航配置。</p>
+<h3>在线二维地图保存</h3>
+<div class="codebox"><span class="lang">BASH</span><pre>bash scripts/savemap.bash /map maps/site_a/site_a_snapshot</pre></div>
+<p><code>/map</code> 必须有真实 OccupancyGrid 发布者。脚本按指定话题保存，不会自动从 Point-LIO 完整点云生成二维地图；先运行 pcd2pgm 或其他已验证栅格发布器。</p></section><section class="chapter" id="c24" style="--accent:#db2777"><div class="eyebrow">DEPLOYMENT / MODULE 24</div><h2>24｜调参入口、真实生效方式与当前陷阱</h2><table><thead><tr><th>模块</th><th>优先参数族</th><th>指标</th></tr></thead><tbody>
+<tr><td>Point-LIO</td><td>点滤波、体素、batch、噪声与 iVox</td><td>漂移、点云重影、耗时、队列</td></tr>
+<tr><td>GICP</td><td>初值、裁剪、体素、质量与稳定窗口</td><td>成功率、时间、误接受、回退</td></tr>
+<tr><td>ROGMap</td><td>分辨率、滑窗、概率、衰减与投影</td><td>障碍出现/清除、通道、耗时</td></tr>
+<tr><td>MINCO</td><td>速度/加速度、安全距离、前视、代价</td><td>到达率、距离、规划耗时、失败</td></tr>
+<tr><td>MPC</td><td>dt、lookahead_time、R、约束与补偿</td><td>跟踪误差、指令抖动、超调、求解耗时</td></tr>
+</tbody></table>
+<p>当前 MPC：<code>dt=0.05</code>、<code>lookahead_time=0.5</code>；内部 <code>horizon=ceil(lookahead_time/dt)=10</code>。源码虽声明 horizon 参数，但实际由公式产生。<code>/opt_path.mpc_horizon</code> 则是参考采样数量，不是控制器求解步数。</p>
+<p><strong>Q 配置与实现存在差异：</strong> YAML 的 Q 被读取为三元向量，但 <code>mpc_solver.cpp</code> 平面代价使用 <code>mpc_types.hpp</code> 中 <code>q_along=3</code>、<code>q_cross=12</code>，当前未见它们由 YAML Q 前两项赋值或作为 ROS 参数加载；yaw 使用 <code>Q.z()</code>。因此修改 Q 前两项不能据此认为平面权重改变。此前课堂将其理解为 Q 前两项是过度简化，部署以此处源码核查为准。R 用于输出控制与参考速度/角速度的偏差，不是直接惩罚相邻控制变化。</p>
+<p>控制目标100 Hz，与模型 dt=50 ms不同。加速度约束约束预测步间速度差，不能直接当作每10 ms发送命令严格变化上限。<code>vx/vy ±3</code> 是分轴界限，不等于合速度≤3；同时两轴3时合速度约4.24 m/s。舵轮本车约束必须按合速度和机构能力核对。</p>
+<p>首次接车建议建立自己的低速配置副本，同时限制 planner 的 <code>MincoPlanner.minco_optimizer.max_velocity/max_acceleration/max_yaw_dot</code> 与 controller 的 <code>FollowPath.vx/vy/omega</code>、加速度约束。原 <code>min_turn_vel=0.7</code>、<code>recovery_server.escape_speed=0.5</code> 等也要与低速测试一致；不要只把其中一个上限改小却保留更高的恢复速度。本文不替你修改运行参数，不给未经测试的“最优参数”。</p>
+<p>ROGMap <code>projection.scan_z_*_abs</code> 是绝对 Z，ground/step/tunnel 的 height_delta 是高度差；三维 decay 的 keep/clear 时间与二维 obstacle_hold_time 不同。MPC 的安装偏移与 Point-LIO base_link 偏移必须一致，外参和时间单位先校准，不能作为优化旋钮试错。</p>
+<p>固定路线重复至少三次，每次只改一个参数族，保存旧值/新值、单位、是否重启、预期与代价。一起看平均误差、尾部耗时、队列、停止距离和失败样本；平均变好不代表整体优化成功。</p></section><section class="chapter" id="c25" style="--accent:#db2777"><div class="eyebrow">DEPLOYMENT / MODULE 25</div><h2>25｜接口速查与源码定位</h2><table><thead><tr><th>接口</th><th>类型 / frame</th><th>发布与消费</th></tr></thead><tbody>
+<tr><td><code>/livox/lidar</code></td><td>livox_ros_driver2/msg/CustomMsg / livox_frame</td><td>驱动融合 → Point-LIO</td></tr>
+<tr><td><code>/livox/imu_&lt;ip&gt;</code></td><td>sensor_msgs/msg/Imu</td><td>驱动 → 选定主 IMU 的 LIO</td></tr>
+<tr><td><code>/aft_mapped_to_init</code></td><td>nav_msgs/msg/Odometry / camera_init、body</td><td>LIO → 规划、控制、通信</td></tr>
+<tr><td><code>/cloud_registered_full</code></td><td>sensor_msgs/msg/PointCloud2 / camera_init</td><td>LIO → GICP、ROGMap</td></tr>
+<tr><td><code>/cloud_registered</code></td><td>PointCloud2 / camera_init</td><td>LIO → STVL/辅助处理</td></tr>
+<tr><td><code>/opt_path</code></td><td>ros_interfaces/msg/MpcPositionCommand / 默认 map</td><td>MINCO → MPC</td></tr>
+<tr><td><code>/opt_path_vis</code></td><td>nav_msgs/msg/Path</td><td>MINCO → 显示</td></tr>
+<tr><td><code>/cmd_vel_mpc</code></td><td>geometry_msgs/msg/Twist / 约定 camera_init</td><td>MPC → communication</td></tr>
+<tr><td><code>/mpc_predict_path</code></td><td>nav_msgs/msg/Path</td><td>MPC → 显示/记录</td></tr>
+<tr><td><code>/tf</code>、<code>/tf_static</code></td><td>tf2_msgs/msg/TFMessage</td><td>坐标发布 → TF查询</td></tr>
+<tr><td><code>/gicp_recall</code></td><td>std_srvs/srv/Trigger</td><td>外部调用 → 重定位状态重置</td></tr>
+<tr><td><code>/navigate_to_pose</code></td><td>nav2_msgs/action/NavigateToPose</td><td>人工/策略 → Nav2</td></tr>
+<tr><td><code>/compute_path_to_pose</code></td><td>nav2_msgs/action/ComputePathToPose</td><td>Nav2/外部 → planner</td></tr>
+<tr><td><code>/sentry/behaivor_send</code></td><td>ros_interfaces/msg/Behavior</td><td>bt_manager → communication</td></tr>
+<tr><td><code>/sentry/*_info</code></td><td>ros_interfaces 自定义消息，实机查类型</td><td>communication → bt_manager</td></tr>
+</tbody></table>
+<p>完整 QoS 用 <code>ros2 topic info &lt;话题&gt; -v</code> 查看；不是所有接口都 reliable，传感器与高频里程计需要特别核对。调试不要默认添加第二个同名发布者。</p>
+<h3>源码定位</h3>
+<table><thead><tr><th>想读的行为</th><th>源码位置</th></tr></thead><tbody>
+<tr><td>主 launch 覆盖 IMU</td><td><code>Point-LIO/launch/livox_pointlio_intra_process.launch.py</code></td></tr>
+<tr><td>IMU/点云回调、sync_packages</td><td><code>Point-LIO/src/li_initialization.cpp</code></td></tr>
+<tr><td>LIO 处理、TF、PCD 保存</td><td><code>Point-LIO/src/laserMapping.cpp</code></td></tr>
+<tr><td>GICP 状态机、回退和 recall</td><td><code>icp_relocalization/src/gicp_ros_interface.cpp</code></td></tr>
+<tr><td>GICP 平面 TF 输出</td><td><code>icp_relocalization/src/gicp_utils.cpp</code></td></tr>
+<tr><td>规划模式与坐标</td><td><code>minco_planner/src/minco_core/components/planner_mode_context.cpp</code></td></tr>
+<tr><td>MINCO 主流程/FSM</td><td><code>minco_planner/src/minco_core/minco_planner.cpp</code></td></tr>
+<tr><td>轨迹消息采样发布</td><td><code>minco_planner/src/minco_core/minco_utils.cpp</code></td></tr>
+<tr><td>MPC 输入、参考与发布</td><td><code>minco_controller/src/minco_mpc_controller.cpp</code></td></tr>
+<tr><td>MPC QP 与约束</td><td><code>minco_controller/src/mpc_solver.cpp</code></td></tr>
+<tr><td>MPC 默认配置</td><td><code>minco_controller/include/minco_controller/mpc_types.hpp</code></td></tr>
+<tr><td>串口、速度字段打包</td><td><code>communication/src/com.cpp</code>、<code>include/com_interface_ros.hpp</code></td></tr>
+<tr><td>比赛树装载</td><td><code>bt_manager/src/bt_manager.cpp</code>、<code>tree/*.xml</code></td></tr>
+</tbody></table>
+<p>本表路径的包目录见第 02 节，均相对 src 下对应模块；可用全文件索引直接打开。</p>
+<p>在仓库根目录按函数或接口搜索，可从“谁发布、谁订阅”追到具体实现：</p>
+<div class="codebox"><span class="lang">BASH</span><pre>rg -n &#x27;publishOptimizedTrajectory|/opt_path&#x27; src/navigation
+rg -n &#x27;transformPathToOdom|cmd_vel_mpc&#x27; src/navigation/minco_controller
+rg -n &#x27;sync_packages|imu_cbk&#x27; src/perception/Point-LIO/src
+rg -n &#x27;publishDefaultPose|gicp_recall&#x27; src/perception/icp_relocalization</pre></div>
+<p>查到函数定义后先读调用入口、输入类型和参数，再读算法内部。注册 XML 与 CMake 负责插件发现/安装；节点名字并不总与目录名字一致。README 讲用途，源文件和实际 launch 决定当前运行行为。</p></section><section class="chapter" id="c26" style="--accent:#db2777"><div class="eyebrow">DEPLOYMENT / MODULE 26</div><h2>26｜已确认的文档差异与部署待办</h2><p>本手册以本地静态代码为准，保留原源码和比赛参数，没有为了说明书修改算法。</p>
+<table><thead><tr><th>差异 / 未确认项</th><th>本手册处理</th></tr></thead><tbody>
+<tr><td>README 的旧克隆分支/目录</td><td>下载以自己的独立仓库为准</td></tr>
+<tr><td>README 说 start 自动录包</td><td>当前录包与 Foxglove 行被注释，需单独启动</td></tr>
+<tr><td>README 与 start 工作目录不同</td><td>实际 start 为 ~/2027-sentry-navi</td></tr>
+<tr><td>融合外参多套值</td><td>主组合入口以 component YAML 为准</td></tr>
+<tr><td>IMU YAML 被 launch 覆盖</td><td>用实际 launch 参数明确主 IMU</td></tr>
+<tr><td>GICP TF 存在不等于成功</td><td>核对 confirmed、回退与几何对齐</td></tr>
+<tr><td>README 描述通信坐标转换</td><td>打包处直接 vx/vy + yaw/delta，MCU责任未核实</td></tr>
+<tr><td>current_yaw 注释 rad、赋值度</td><td>接口必须与 MCU 联调确认</td></tr>
+<tr><td>Q 前两项与平面权重不同</td><td>标出源码 q_along/q_cross，不宣称参数生效</td></tr>
+<tr><td>仿真 README 含 rmuc_2026</td><td>shell入口当前拒绝，默认用rmuc_2025</td></tr>
+<tr><td>实车 TF 有特殊 base_link 实现</td><td>明确当前姿态/偏移，不套用一般模板</td></tr>
+<tr><td>默认导航 include AMCL</td><td>未确认 scan链有效，避免重复定位TF</td></tr>
+<tr><td>start固定 sleep</td><td>不视作就绪检测</td></tr>
+<tr><td>本机无 NUC/hardware 验证</td><td>所有运行门槛保留待实操</td></tr>
+</tbody></table>
+<p>完成清单：填写设备表；确认依赖版本；构建并检查插件；网络与双雷达标定；静止/旋转LIO；制作同源地图；GICP正确配准；导航action/取消；舵轮坐标与MCU看门狗；低速实机路线；录包与重启复现。每项记录日期、版本、日志/数据位置和未解决问题。</p>
+<p>学习上下文保持：课堂停在 MPC 预测时域、权重和约束；A03 构建与 A04 Foxglove 被用户暂时跳过，仍为待实操。本手册完成不代表这些课已验收。</p></section><section class="chapter" id="c27" style="--accent:#db2777"><div class="eyebrow">DEPLOYMENT / MODULE 27</div><h2>27｜依据、更新方式与查阅入口</h2><p>本地依据：root <code>start.bash/build.bash</code>；各包 CMake/package.xml；实车和仿真 launch；驱动 JSON/YAML；Point-LIO、GICP、MINCO/MPC、ROGMap 与 communication 的实际输入输出代码；工具配置和 README。源文件优先于 README 中的过期示例。</p>
+<p>外部说明核对于 2026-10-03 至 2026-10-04。下列链接用于安装和通用工具说明；算法和实车接口结论来自本地源码，不从外部教程推断本车协议。</p>
+<table><thead><tr><th>来源</th><th>查阅用途</th></tr></thead><tbody>
+<tr><td><a href="https://docs.ros.org/en/humble/Installation/Ubuntu-Install-Debs.html">ROS 2 Humble 官方安装</a></td><td>ROS 软件源与基础安装；并核对官方文档原文</td></tr>
+<tr><td><a href="https://github.com/Livox-SDK/Livox-SDK2">Livox SDK2</a></td><td>SDK C++ 安装</td></tr>
+<tr><td><a href="https://livox-wiki-en.readthedocs.io/en/latest/tutorials/new_product/mid360/livox_eth_protocol_mid360.html">Livox MID-360 协议</a></td><td>网络、数据与时钟字段</td></tr>
+<tr><td><a href="https://github.com/koide3/small_gicp#installation">small_gicp C++</a></td><td>C++ 头文件与依赖安装</td></tr>
+<tr><td><a href="https://github.com/strasdat/Sophus">Sophus</a></td><td>原版 C++ 几何库</td></tr>
+<tr><td><a href="https://docs.foxglove.dev/docs/getting-started/frameworks/ros2">Foxglove ROS 2</a></td><td>bridge、WebSocket、MCAP</td></tr>
+<tr><td><a href="https://github.com/ros2/rosbag2/tree/humble">rosbag2 Humble</a></td><td>录制、播放、QoS与时钟</td></tr>
+</tbody></table>
+<p>维护时修改 <code>learning/manual/NAVI_MINCO_BIT_USER_MANUAL.md</code>；PDF 为查阅快照。新版本必须重新核对 launch、话题、frame、协议和路径，并更新封面日期与源码版本。部署成功后填入自己的运行证据，保留失败案例。</p>
+<p>配套资料：<code>learning/ROADMAP.md</code> 学习路线；<code>learning/PROGRESS.md</code> 课程证据；<code>learning/PROJECT_INDEX.md</code> 全文件索引；<code>learning/NAVI_MINCO_BIT_FLOWCHART.md</code> 完整架构；<code>learning/templates/EXPERIMENT_RECORD.md</code> 调参记录。</p></section></body></html>
