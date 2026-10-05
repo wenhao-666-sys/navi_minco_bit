@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>navi_minco_bit 导航架构总图</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; width: 3600px; height: 2500px; overflow: hidden; background: #fff; }
+  body { font-family: "Microsoft YaHei", "Noto Sans CJK SC", Arial, sans-serif; color: #111827; }
+  #canvas { position: relative; width: 3600px; height: 2500px; background: #fff; }
+  h1 { position:absolute; left:70px; top:34px; margin:0; font-size:42px; font-weight:800; }
+  .subtitle { position:absolute; left:72px; top:94px; font-size:19px; color:#475569; }
+  .band-title { position:absolute; z-index:3; font-size:23px; font-weight:800; color:#334155; letter-spacing:1px; }
+  .group { position:absolute; z-index:0; border-radius:22px; border:3px solid; }
+  .group-label { position:absolute; top:-38px; left:18px; padding:5px 14px; background:#fff; border:2px solid currentColor; border-radius:10px; font-size:20px; font-weight:800; }
+  .container { left:610px; top:235px; width:1060px; height:1200px; background:#ecfeff88; border-color:#0891b2; color:#0e7490; }
+  .nav2group { left:1760px; top:1390px; width:1240px; height:510px; background:#fefce888; border-color:#ca8a04; color:#a16207; }
+  .commgroup { left:2160px; top:1925px; width:1370px; height:300px; background:#f8fafc; border-color:#64748b; color:#475569; }
+  .nodebox { position:absolute; z-index:2; width:300px; min-height:92px; padding:13px 16px; border-radius:12px; border:3px solid; display:flex; align-items:center; justify-content:center; text-align:center; line-height:1.28; font-size:17px; background:#fff; box-shadow:0 2px 7px #00000018; }
+  .nodebox b { display:block; font-size:21px; margin-bottom:4px; }
+  .node { background:#e8f1ff; border-color:#2563eb; }
+  .topic { background:#ecfdf5; border-color:#059669; }
+  .tf { background:#fff7ed; border-color:#ea580c; }
+  .service { background:#fdf2f8; border-color:#db2777; }
+  .action { background:#fefce8; border-color:#ca8a04; }
+  .memory { background:#f5f3ff; border-color:#7c3aed; }
+  .resource { background:#fef3c7; border-color:#a16207; }
+  .hardware { background:#f3f4f6; border-color:#4b5563; }
+  .tool { background:#ecfeff; border-color:#0891b2; }
+  .debug { background:#f9fafb; border-color:#6b7280; border-style:dashed; }
+  .small { width:255px; min-height:82px; font-size:16px; }
+  .small b { font-size:19px; }
+  #edges { position:absolute; inset:0; z-index:1; pointer-events:none; }
+  .edge { fill:none; stroke:#1f2937; stroke-width:3; marker-end:url(#arrow); }
+  .edge.dashed { stroke-dasharray:12 9; marker-end:url(#arrowDash); }
+  .edge.secondary { stroke:#64748b; stroke-width:2.5; }
+  .edge-label { font-size:17px; font-weight:600; fill:#111827; paint-order:stroke; stroke:#fff; stroke-width:10px; stroke-linejoin:round; }
+  .edge-label.dashed { fill:#7c2d12; }
+  #legend { position:absolute; left:60px; top:2280px; width:3480px; height:175px; z-index:4; border:2px dashed #94a3b8; border-radius:15px; background:#fff; padding:20px 25px; display:flex; align-items:center; gap:26px; flex-wrap:wrap; font-size:17px; }
+  .legend-item { display:flex; align-items:center; gap:9px; min-width:210px; }
+  .swatch { width:54px; height:34px; border-radius:6px; border:3px solid; }
+  .line-sample { width:75px; height:0; border-top:4px solid #1f2937; position:relative; }
+  .line-sample::after { content:""; position:absolute; right:-2px; top:-8px; border-left:12px solid #1f2937; border-top:6px solid transparent; border-bottom:6px solid transparent; }
+  .line-sample.dash { border-top-style:dashed; }
+</style>
+</head>
+<body>
+<div id="canvas">
+  <h1>navi_minco_bit 导航系统架构与调试总图</h1>
+  <div class="subtitle">源码基线 6dba3a5 · 实车启动链 start.bash · Ubuntu 22.04 / ROS 2 Humble · 双 MID-360 / NUC / 舵轮底盘</div>
+
+  <div class="group container"><div class="group-label">/livox_pointlio_container · 同一 component_container_mt 进程</div></div>
+  <div class="group nav2group"><div class="group-label">Nav2 独立进程组 · use_composition=False</div></div>
+  <div class="group commgroup"><div class="group-label">串口通信与舵轮执行链</div></div>
+
+  <div class="band-title" style="left:55px;top:175px">① 硬件与雷达接入</div>
+  <div class="band-title" style="left:1830px;top:175px">② 里程计与地图对齐</div>
+  <div class="band-title" style="left:55px;top:900px">③ 地图、环境表示与规划</div>
+  <div class="band-title" style="left:55px;top:1460px">④ 决策、Nav2 Action 与 MPC</div>
+
+  <div id="front" class="nodebox hardware small" style="left:55px;top:250px"><div><b>前 MID-360</b>192.168.1.135<br>主 IMU 来源</div></div>
+  <div id="rear" class="nodebox hardware small" style="left:55px;top:380px"><div><b>后 MID-360</b>192.168.1.122</div></div>
+  <div id="nic" class="nodebox hardware small" style="left:340px;top:315px"><div><b>交换机 / NUC 网卡</b>主机示例 192.168.1.47</div></div>
+  <div id="ptp" class="nodebox tool small" style="left:335px;top:190px"><div><b>ptp_sync.bash</b>统一 NUC 与雷达时基</div></div>
+
+  <div id="driver" class="nodebox node" style="left:665px;top:315px"><div><b>livox_driver_node</b>双雷达接收、时间配对<br>后雷达到前雷达外参融合</div></div>
+  <div id="pointlio" class="nodebox node" style="left:665px;top:565px"><div><b>laserMapping / Point-LIO</b>同步、去畸变、IMU 传播<br>点云匹配与状态更新</div></div>
+  <div id="planner" class="nodebox node" style="left:665px;top:1080px"><div><b>planner_server</b>Nav2 PlannerServer<br>后加载到同一容器</div></div>
+  <div id="rog" class="nodebox memory" style="left:1060px;top:930px"><div><b>ROGMapROS / Query</b>占据、投影、ESDF<br>二维先验融合</div></div>
+  <div id="minco" class="nodebox memory" style="left:1060px;top:1135px"><div><b>MincoPlanner + FSM</b>搜索、轨迹优化<br>安全检查与重规划</div></div>
+
+  <div id="lidar" class="nodebox topic" style="left:1800px;top:260px"><div><b>/livox/lidar</b>livox_ros_driver2/CustomMsg<br>双雷达融合点云</div></div>
+  <div id="imu" class="nodebox topic" style="left:1800px;top:405px"><div><b>/livox/imu_192_168_1_135</b>sensor_msgs/Imu<br>launch 覆盖后的输入</div></div>
+  <div id="odom" class="nodebox topic" style="left:1800px;top:570px"><div><b>/aft_mapped_to_init</b>nav_msgs/Odometry<br>camera_init → body</div></div>
+  <div id="fullcloud" class="nodebox topic" style="left:1800px;top:720px"><div><b>/cloud_registered_full</b>PointCloud2<br>camera_init 系完整点云</div></div>
+  <div id="gicp" class="nodebox node" style="left:2310px;top:545px"><div><b>gicp_relocalization_node</b>累积点云与 PCD 配准<br>质量门槛、稳定窗口、回退</div></div>
+  <div id="gicppcd" class="nodebox resource small" style="left:2325px;top:340px"><div><b>先验 PCD</b>cloudlab_processed_blue.pcd</div></div>
+  <div id="gicpsrv" class="nodebox service small" style="left:2325px;top:740px"><div><b>/gicp_recall</b>std_srvs/Trigger<br>重新触发配准</div></div>
+  <div id="tf" class="nodebox tf" style="left:2820px;top:520px"><div><b>/tf</b>GICP：map → camera_init<br>Point-LIO：camera_init → body / base_link / slambase</div></div>
+  <div id="tfstatic" class="nodebox tf small" style="left:2840px;top:710px"><div><b>/tf_static</b>map → minimap</div></div>
+  <div id="statictf" class="nodebox node small" style="left:3180px;top:710px"><div><b>static_tf_map_to_minimap</b>static_transform_publisher</div></div>
+
+  <div id="navmap" class="nodebox resource small" style="left:55px;top:990px"><div><b>rmuc2026.yaml + PGM</b>Nav2 静态二维地图</div></div>
+  <div id="mapserver" class="nodebox node small" style="left:350px;top:990px"><div><b>map_server</b>静态地图服务器</div></div>
+  <div id="maptopic" class="nodebox topic small" style="left:350px;top:1160px"><div><b>/map</b>nav_msgs/OccupancyGrid</div></div>
+  <div id="amcl" class="nodebox node small" style="left:55px;top:1280px"><div><b>amcl</b>会随 localization_launch 启动<br>当前无有效 /scan 输入链</div></div>
+  <div id="rogprior" class="nodebox resource small" style="left:1390px;top:930px"><div><b>rmuc2026_prior11</b>ROGMap 二维先验</div></div>
+
+  <div id="btmanager" class="nodebox node" style="left:70px;top:1560px"><div><b>bt_manager_node</b>比赛行为树<br>生成导航目标与附加控制</div></div>
+  <div id="blackboard" class="nodebox memory small" style="left:90px;top:1750px"><div><b>BT blackboard</b>比赛状态、位姿、目标、策略</div></div>
+  <div id="navigate" class="nodebox action small" style="left:440px;top:1530px"><div><b>/navigate_to_pose</b>NavigateToPose Action</div></div>
+  <div id="btnav" class="nodebox node small" style="left:760px;top:1530px"><div><b>bt_navigator</b>Nav2 导航行为树</div></div>
+  <div id="compute" class="nodebox action small" style="left:1080px;top:1480px"><div><b>/compute_path_to_pose</b>ComputePathToPose Action</div></div>
+  <div id="follow" class="nodebox action small" style="left:1080px;top:1640px"><div><b>/follow_path</b>FollowPath Action</div></div>
+
+  <div id="opt" class="nodebox topic" style="left:1830px;top:1480px"><div><b>/opt_path</b>MpcPositionCommand<br>优化后的 MPC 参考轨迹</div></div>
+  <div id="mpc" class="nodebox memory" style="left:2210px;top:1480px"><div><b>MincoMpcController</b>参考采样、MPC 求解<br>约束、限幅、延迟补偿</div></div>
+  <div id="controller" class="nodebox node" style="left:2600px;top:1480px"><div><b>controller_server</b>FollowPath 插件宿主<br>控制频率 100 Hz</div></div>
+  <div id="cmd" class="nodebox topic" style="left:3060px;top:1480px"><div><b>/cmd_vel_mpc</b>geometry_msgs/Twist<br>vx、vy 使用项目世界系约定</div></div>
+  <div id="lifecycle" class="nodebox service small" style="left:1840px;top:1715px"><div><b>Lifecycle Service</b>配置、激活与监控 Nav2 节点</div></div>
+  <div id="cmdside" class="nodebox debug small" style="left:2635px;top:1715px"><div><b>Nav2 标准速度旁路</b>/cmd_vel_nav → velocity_smoother<br>→ /cmd_vel（不接串口主链）</div></div>
+
+  <div id="status" class="nodebox topic" style="left:70px;top:1980px"><div><b>/sentry/*_info</b>game / team / radar<br>offline / online</div></div>
+  <div id="behavior" class="nodebox topic" style="left:470px;top:1980px"><div><b>/sentry/behaivor_send</b>ros_interfaces/Behavior<br>比赛行为与底盘附加控制</div></div>
+  <div id="mapload" class="nodebox service small" style="left:850px;top:1980px"><div><b>/map_server/load_map</b>比赛切图服务</div></div>
+
+  <div id="commstate" class="nodebox memory" style="left:2205px;top:1990px"><div><b>通信进程共享状态</b>最新 cmd / odom / behavior<br>IMU yaw 历史与 delta_yaw</div></div>
+  <div id="comm" class="nodebox node" style="left:2585px;top:1990px"><div><b>communication_sentry</b>100 Hz 封包发送<br>UART 协议编解码</div></div>
+  <div id="mcu" class="nodebox hardware" style="left:2970px;top:1990px"><div><b>MCU / 电控</b>/dev/ttyACM0 · 115200<br>坐标转换与舵轮解算责任待协议核对</div></div>
+  <div id="swerve" class="nodebox hardware small" style="left:3310px;top:1990px"><div><b>舵轮底盘</b>执行 vx、vy、旋转指令</div></div>
+
+  <div id="debug" class="nodebox debug" style="left:1370px;top:2070px;width:640px"><div><b>RViz2 / Foxglove / rosbag / ros2 CLI</b>GICP source/target · ROGMap · opt_path_vis · MPC 预测路径 · TF · odom · cmd_vel_mpc</div></div>
+
+  <svg id="edges" width="3600" height="2500" viewBox="0 0 3600 2500">
+    <defs>
+      <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto"><path d="M0,0 L12,6 L0,12 z" fill="#1f2937"/></marker>
+      <marker id="arrowDash" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto"><path d="M0,0 L12,6 L0,12 z" fill="#64748b"/></marker>
+    </defs>
+  </svg>
+
+  <div id="legend">
+    <b style="font-size:21px;margin-right:8px">图例</b>
+    <span class="legend-item"><span class="swatch" style="background:#e8f1ff;border-color:#2563eb"></span>ROS 节点</span>
+    <span class="legend-item"><span class="swatch" style="background:#ecfdf5;border-color:#059669"></span>ROS Topic</span>
+    <span class="legend-item"><span class="swatch" style="background:#fff7ed;border-color:#ea580c"></span>TF Topic</span>
+    <span class="legend-item"><span class="swatch" style="background:#fdf2f8;border-color:#db2777"></span>ROS Service</span>
+    <span class="legend-item"><span class="swatch" style="background:#fefce8;border-color:#ca8a04"></span>ROS Action</span>
+    <span class="legend-item"><span class="swatch" style="background:#f5f3ff;border-color:#7c3aed"></span>进程内对象 / 状态</span>
+    <span class="legend-item"><span class="swatch" style="background:#fef3c7;border-color:#a16207"></span>地图 / 配置资源</span>
+    <span class="legend-item"><span class="swatch" style="background:#f3f4f6;border-color:#4b5563"></span>硬件</span>
+    <span class="legend-item"><span class="line-sample"></span>正式数据流 / 调用</span>
+    <span class="legend-item"><span class="line-sample dash"></span>服务 / 调试 / 非主链</span>
+  </div>
+</div>
+<script>
+const svg = document.getElementById('edges');
+function point(el, side) {
+  const x=el.offsetLeft, y=el.offsetTop, w=el.offsetWidth, h=el.offsetHeight;
+  if(side==='l') return [x,y+h/2]; if(side==='r') return [x+w,y+h/2];
+  if(side==='t') return [x+w/2,y]; return [x+w/2,y+h];
+}
+function edge(from,to,label,opt={}) {
+  const a=document.getElementById(from), b=document.getElementById(to);
+  const fs=opt.fs||'r', ts=opt.ts||'l', p1=point(a,fs), p2=point(b,ts);
+  let d, lx, ly;
+  if(opt.route==='v' || fs==='b' || fs==='t') {
+    const mid=(opt.mid!==undefined?opt.mid:(p1[1]+p2[1])/2);
+    d=`M ${p1[0]} ${p1[1]} L ${p1[0]} ${mid} L ${p2[0]} ${mid} L ${p2[0]} ${p2[1]}`; lx=(p1[0]+p2[0])/2; ly=mid-8;
+  } else {
+    const mid=(opt.mid!==undefined?opt.mid:(p1[0]+p2[0])/2);
+    d=`M ${p1[0]} ${p1[1]} L ${mid} ${p1[1]} L ${mid} ${p2[1]} L ${p2[0]} ${p2[1]}`; lx=mid; ly=(p1[1]+p2[1])/2-8;
+  }
+  const path=document.createElementNS('http://www.w3.org/2000/svg','path'); path.setAttribute('d',d); path.setAttribute('class','edge '+(opt.dash?'dashed secondary':'')); svg.appendChild(path);
+  if(label){const t=document.createElementNS('http://www.w3.org/2000/svg','text');t.setAttribute('x',opt.lx||lx);t.setAttribute('y',opt.ly||ly);t.setAttribute('text-anchor','middle');t.setAttribute('class','edge-label '+(opt.dash?'dashed':''));t.textContent=label;svg.appendChild(t);}
+}
+
+edge('front','nic','点云 / IMU / 时钟'); edge('rear','nic','点云 / 时钟'); edge('ptp','nic','PTP 同步',{fs:'b',ts:'t',route:'v'}); edge('nic','driver','Livox SDK2');
+edge('driver','lidar','发布',{mid:1735,ly:285}); edge('driver','imu','发布',{mid:1710,ly:420}); edge('lidar','pointlio','订阅：点云',{fs:'l',ts:'r',mid:1715,ly:345}); edge('imu','pointlio','订阅：IMU',{fs:'l',ts:'r',mid:1685,ly:510});
+edge('pointlio','odom','发布 odometry',{mid:1720,ly:600}); edge('pointlio','fullcloud','发布完整点云',{mid:1745,ly:740}); edge('pointlio','tf','发布局部 TF',{mid:2750,ly:500});
+edge('fullcloud','gicp','配准源点云'); edge('odom','gicp','局部运动与时间'); edge('gicppcd','gicp','加载先验',{fs:'b',ts:'t',route:'v'}); edge('gicp','tf','发布 map → camera_init');
+edge('statictf','tfstatic','发布固定 TF',{fs:'l',ts:'r'});
+edge('pointlio','gicpsrv','请求重新配准',{dash:true,mid:2050,ly:775}); edge('gicpsrv','gicp','服务端',{dash:true,fs:'t',ts:'b',route:'v'});
+
+edge('navmap','mapserver','加载'); edge('mapserver','maptopic','发布',{fs:'b',ts:'t',route:'v'}); edge('maptopic','planner','全局代价地图',{mid:580,ly:1195}); edge('rogprior','rog','加载先验',{fs:'l',ts:'r'});
+edge('maptopic','amcl','地图输入；当前非主链',{dash:true,fs:'l',ts:'r',mid:310,ly:1280});
+edge('fullcloud','rog','在线点云',{fs:'l',ts:'r',mid:1730,ly:865}); edge('odom','rog','位姿 / 滑窗中心',{fs:'l',ts:'r',mid:1695,ly:820}); edge('tf','rog','查询 map ↔ camera_init',{fs:'l',ts:'r',mid:2760,ly:900});
+edge('planner','minco','加载插件'); edge('minco','rog','地图查询',{fs:'t',ts:'b',route:'v'}); edge('minco','opt','发布优化轨迹',{mid:1740,ly:1445});
+
+edge('status','btmanager','比赛状态',{fs:'t',ts:'b',route:'v',mid:1915,lx:165}); edge('odom','btmanager','当前位置',{fs:'b',ts:'r',route:'v',mid:1450,lx:530,ly:1425}); edge('tf','btmanager','base_link → map',{fs:'b',ts:'r',route:'v',mid:1430,lx:2930,ly:1405}); edge('btmanager','blackboard','读写',{fs:'b',ts:'t',route:'v'});
+edge('btmanager','navigate','发送目标'); edge('navigate','btnav','Action Server'); edge('btnav','compute','请求规划'); edge('compute','planner','Action Server',{fs:'t',ts:'b',route:'v',mid:1425}); edge('btnav','follow','请求跟踪',{fs:'b',ts:'l',route:'v',mid:1710,lx:940}); edge('follow','controller','Action Server',{mid:2480,ly:1720});
+edge('opt','mpc','订阅参考轨迹'); edge('odom','mpc','订阅当前状态',{fs:'b',ts:'t',route:'v',mid:1370,lx:2100,ly:1350}); edge('controller','mpc','调用插件',{fs:'l',ts:'r'}); edge('mpc','cmd','发布实际控制量',{mid:3000,ly:1505});
+edge('lifecycle','planner','生命周期管理',{dash:true,fs:'t',ts:'b',route:'v',mid:1360}); edge('lifecycle','controller','生命周期管理',{dash:true});
+edge('controller','cmdside','标准输出旁路',{dash:true,fs:'b',ts:'t',route:'v'});
+
+edge('btmanager','behavior','发布行为',{fs:'b',ts:'t',route:'v',mid:1930,lx:420}); edge('btmanager','mapload','切图请求',{dash:true,fs:'b',ts:'t',route:'v',mid:1920,lx:690}); edge('mapload','mapserver','LoadMap 服务',{dash:true,fs:'t',ts:'b',route:'v',mid:1885,lx:720});
+edge('cmd','comm','订阅 vx / vy / wz',{fs:'b',ts:'t',route:'v'}); edge('odom','commstate','速度、姿态、时间戳',{fs:'b',ts:'t',route:'v',mid:1905,lx:2050,ly:1880}); edge('behavior','commstate','附加控制',{mid:2120,ly:2030}); edge('commstate','comm','发送快照');
+edge('mcu','comm','UART：比赛数据 / IMU yaw',{fs:'l',ts:'r'}); edge('comm','status','发布解析状态',{fs:'l',ts:'r',mid:2050,ly:2150}); edge('comm','mcu','UART：vx / vy / rpm / yaw',{fs:'r',ts:'l',mid:2925,ly:1990}); edge('mcu','swerve','舵轮解算与执行');
+
+edge('gicp','debug','source / target',{dash:true,fs:'b',ts:'t',route:'v',mid:2050,lx:2250}); edge('rog','debug','ROGMap 可视化',{dash:true,fs:'b',ts:'t',route:'v',mid:2040,lx:1250}); edge('minco','debug','规划路径',{dash:true,fs:'b',ts:'t',route:'v',mid:2030,lx:1450}); edge('mpc','debug','预测 / 实走路径',{dash:true,fs:'b',ts:'t',route:'v',mid:2050,lx:2180}); edge('tf','debug','TF 树',{dash:true,fs:'b',ts:'t',route:'v',mid:2060,lx:2800});
+</script>
+</body>
+</html>
