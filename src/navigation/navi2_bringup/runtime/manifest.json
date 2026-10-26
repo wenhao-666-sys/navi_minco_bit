@@ -1,0 +1,10 @@
+{
+  "rclcpp_version": "16.0.18",
+  "source_url": "https://codeload.github.com/ros2/rclcpp/tar.gz/refs/tags/16.0.18",
+  "source_sha256": "db7f9fc412b273eb6f18ebcaced3b63baf968d043575bd01f502a6afed244473",
+  "library_sha256": "d06f33e7e989075a19359d9cde22a9d9c87f24adfad9499b1c4e172480ca229b",
+  "patch_sha256": "3d81136026c524f774038a5dffa3a4a87897f2b62fb84efbfbbd7d7cb5a1e9b1",
+  "architecture": "x86_64-linux-gnu",
+  "build_type": "RelWithDebInfo",
+  "build_testing": false
+}

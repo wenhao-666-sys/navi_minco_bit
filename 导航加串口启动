@@ -1,0 +1,95 @@
+一、建图模式
+终端A:
+sudo bash /home/robomaster/mid360-ptp/start.sh enp2s0
+
+
+
+
+终端B:
+cd ~/2027-sentry-navi
+source /opt/ros/humble/setup.bash
+source ~/QD_Vision26/install/setup.bash
+source install/setup.bash
+source ~/fwh/install/pointcloud_to_laserscan/share/pointcloud_to_laserscan/local_setup.bash
+
+export ROS_DOMAIN_ID=0
+export ROS_LOCALHOST_ONLY=0
+export RMW_IMPLEMENTATION=rmw_fastrtps_cpp
+export FASTRTPS_DEFAULT_PROFILES_FILE="$PWD/src/navigation/vel_rotate/config/fastdds_udp.xml"
+export FASTDDS_DEFAULT_PROFILES_FILE="$FASTRTPS_DEFAULT_PROFILES_FILE"
+
+ros2 launch navi2 dual_lidar_mapping.launch.py \
+  map_backend:=pcd \
+  output_dir:="$HOME/maps/pcd_site_20261024"
+
+
+
+
+
+
+
+
+
+
+
+
+
+二、导航和串口通信启动
+
+终端A:
+bash ~/2027-sentry-navi/src/navigation/vel_rotate/scripts/qd_bridge.bash serial
+
+
+
+bash ~/2027-sentry-navi/src/navigation/vel_rotate/scripts/qd_bridge.bash rotate
+
+
+
+终端B:
+# 终端 C：启动 GICP 导航
+cd ~/2027-sentry-navi
+source /opt/ros/humble/setup.bash
+source ~/QD_Vision26/install/setup.bash
+source install/setup.bash
+source ~/fwh/install/pointcloud_to_laserscan/share/pointcloud_to_laserscan/local_setup.bash
+
+export ROS_DOMAIN_ID=0
+export ROS_LOCALHOST_ONLY=0
+export RMW_IMPLEMENTATION=rmw_fastrtps_cpp
+export FASTRTPS_DEFAULT_PROFILES_FILE="$PWD/src/navigation/vel_rotate/config/fastdds_udp.xml"
+export FASTDDS_DEFAULT_PROFILES_FILE="$FASTRTPS_DEFAULT_PROFILES_FILE"
+
+sudo -v
+
+ros2 launch navi2 navigation2.launch.py \
+  localization:=gicp \
+  map:="$HOME/maps/pcd_site_20261025_204708/map.yaml" \
+  
+  
+  
+  
+  
+终端c（foxglove）:
+cd ~/2027-sentry-navi
+source /opt/ros/humble/setup.bash
+source ~/QD_Vision26/install/setup.bash
+source install/setup.bash
+source ~/fwh/install/pointcloud_to_laserscan/share/pointcloud_to_laserscan/local_setup.bash
+
+export ROS_DOMAIN_ID=0
+export ROS_LOCALHOST_ONLY=0
+export RMW_IMPLEMENTATION=rmw_fastrtps_cpp
+export FASTRTPS_DEFAULT_PROFILES_FILE="$PWD/src/navigation/vel_rotate/config/fastdds_udp.xml"
+export FASTDDS_DEFAULT_PROFILES_FILE="$FASTRTPS_DEFAULT_PROFILES_FILE"
+
+1:本地看
+ros2 launch foxglove_bridge foxglove_bridge_launch.xml port:=8765
+
+2:远程主机连接（还要在主机上打开连接ws://192.168.1.100:8765）
+ros2 launch foxglove_bridge foxglove_bridge_launch.xml \
+  address:=0.0.0.0 port:=8765
+
+
+
+
+

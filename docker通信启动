@@ -1,0 +1,12 @@
+a串口启动：
+rv
+ros2 launch rm_bringup bringup_SingleProcess.launch.py
+
+
+docker解决：
+
+sudo ln -s /home/robomaster/QD_Vision26 /ros_ws
+
+source /opt/ros/humble/setup.bash
+source ~/QD_Vision26/install/setup.bash
+ros2 topic echo /serial/receive

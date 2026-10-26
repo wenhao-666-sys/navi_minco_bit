@@ -1,0 +1,133 @@
+{
+  "configById": {
+    "Plot!linear_x": {
+      "title": "X 速度 (m/s)",
+      "paths": [
+        {
+          "value": "/cmd_vel_rotate.linear.x",
+          "enabled": true,
+          "timestampMethod": "receiveTime",
+          "label": "导航指令",
+          "color": "#4C9AFF"
+        },
+        {
+          "value": "/serial/send.linear_x",
+          "enabled": true,
+          "timestampMethod": "receiveTime",
+          "label": "串口发送值",
+          "color": "#FFAB00"
+        },
+        {
+          "value": "/cmd_vel_real.linear.x",
+          "enabled": true,
+          "timestampMethod": "receiveTime",
+          "label": "编码器实际速度",
+          "color": "#36B37E"
+        }
+      ],
+      "xAxisVal": "timestamp",
+      "showLegend": true,
+      "legendDisplay": "top",
+      "isSynced": true,
+      "followingViewWidth": 20
+    },
+    "Plot!linear_y": {
+      "title": "Y 速度 (m/s)",
+      "paths": [
+        {
+          "value": "/cmd_vel_rotate.linear.y",
+          "enabled": true,
+          "timestampMethod": "receiveTime",
+          "label": "导航指令",
+          "color": "#4C9AFF"
+        },
+        {
+          "value": "/serial/send.linear_y",
+          "enabled": true,
+          "timestampMethod": "receiveTime",
+          "label": "串口发送值",
+          "color": "#FFAB00"
+        },
+        {
+          "value": "/cmd_vel_real.linear.y",
+          "enabled": true,
+          "timestampMethod": "receiveTime",
+          "label": "编码器实际速度",
+          "color": "#36B37E"
+        }
+      ],
+      "xAxisVal": "timestamp",
+      "showLegend": true,
+      "legendDisplay": "top",
+      "isSynced": true,
+      "followingViewWidth": 20
+    },
+    "Plot!angular_z": {
+      "title": "角速度 (rad/s)",
+      "paths": [
+        {
+          "value": "/cmd_vel_rotate.angular.z",
+          "enabled": true,
+          "timestampMethod": "receiveTime",
+          "label": "导航指令",
+          "color": "#4C9AFF"
+        },
+        {
+          "value": "/serial/send.angular_z",
+          "enabled": true,
+          "timestampMethod": "receiveTime",
+          "label": "串口发送值",
+          "color": "#FFAB00"
+        },
+        {
+          "value": "/cmd_vel_real.angular.z",
+          "enabled": true,
+          "timestampMethod": "receiveTime",
+          "label": "编码器实际速度",
+          "color": "#36B37E"
+        }
+      ],
+      "xAxisVal": "timestamp",
+      "showLegend": true,
+      "legendDisplay": "top",
+      "isSynced": true,
+      "followingViewWidth": 20
+    },
+    "Plot!big_yaw": {
+      "title": "big_yaw (deg)",
+      "paths": [
+        {
+          "value": "/serial/receive.big_yaw",
+          "enabled": true,
+          "timestampMethod": "receiveTime",
+          "label": "大云台角度",
+          "color": "#AB47BC"
+        }
+      ],
+      "xAxisVal": "timestamp",
+      "showLegend": true,
+      "legendDisplay": "top",
+      "isSynced": true,
+      "followingViewWidth": 20
+    }
+  },
+  "globalVariables": {},
+  "userNodes": {},
+  "linkedGlobalVariables": [],
+  "playbackConfig": {
+    "speed": 1
+  },
+  "layout": {
+    "direction": "row",
+    "first": {
+      "direction": "column",
+      "first": "Plot!linear_x",
+      "second": "Plot!linear_y"
+    },
+    "second": {
+      "direction": "column",
+      "first": "Plot!angular_z",
+      "second": "Plot!big_yaw"
+    }
+  }
+}

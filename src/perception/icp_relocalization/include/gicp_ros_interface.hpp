@@ -3,6 +3,7 @@
 #include "rclcpp/rclcpp.hpp"
 
 #include "nav_msgs/msg/odometry.hpp"
+#include "geometry_msgs/msg/pose_with_covariance_stamped.hpp"
 #include "sensor_msgs/msg/point_cloud2.hpp"
 
 #include "pcl_conversions/pcl_conversions.h"
@@ -59,6 +60,7 @@ private:
 
   void lidarCallback(const sensor_msgs::msg::PointCloud2::SharedPtr msg);
   void odomCallback(const nav_msgs::msg::Odometry::SharedPtr msg);
+  void initialPoseCallback(const geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr msg);
 
   void setupGicp(const std::string & target_pcd_file);
   void activateLidarSubscription();
@@ -71,6 +73,7 @@ private:
   std::unique_ptr<GicpFilter> gicp_filter_;
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr lidar_sub_;
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_sub_;
+  rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr initial_pose_sub_;
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pub_source_raw_;
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pub_source_cropped_;
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pub_source_aligned_;
@@ -131,6 +134,11 @@ private:
   std::mutex cloud_mtx_;
 
   bool gicp_initialized_ = false;
+  // Opt-in navigation mode. tf_confirmed_ is protected by pose_mtx_.
+  bool wait_for_initial_pose_ = false;
+  bool initial_pose_received_ = false;
+  bool tf_confirmed_ = false;
+  std::string robot_base_frame_;
   rclcpp::Time last_icp_time_;
 
   bool enable_continuous_relocalization_;  // 低频重定位功能开关

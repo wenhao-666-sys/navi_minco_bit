@@ -1,3 +1,6 @@
+import os
+import sysconfig
+
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
@@ -15,6 +18,11 @@ def generate_launch_description():
     log_level = LaunchConfiguration("log_level")
     pointlio_imu_topic = LaunchConfiguration("pointlio_imu_topic")
     intra_process_value = ParameterValue(use_intra_process, value_type=bool)
+    default_library_path = os.pathsep.join(filter(None, (
+        os.path.join("/usr/lib", sysconfig.get_config_var("MULTIARCH")),
+        os.environ.get("LD_LIBRARY_PATH", ""),
+        os.path.expanduser("~/.local/livox-sdk2/lib"),
+    )))
 
     container = ComposableNodeContainer(
         name=container_name,
@@ -23,6 +31,13 @@ def generate_launch_description():
         executable="component_container_mt",
         output="screen",
         arguments=["--ros-args", "--log-level", log_level],
+        # Prefer system libusb over camera SDK copies, and restore the local
+        # Livox SDK search path omitted from the installed driver's RUNPATH.
+        # These changes apply only to this navigation component container.
+        additional_env={
+            "LD_LIBRARY_PATH": LaunchConfiguration("container_library_path"),
+            "LD_PRELOAD": LaunchConfiguration("container_preload"),
+        },
         composable_node_descriptions=[
             ComposableNode(
                 package="livox_ros_driver2",
@@ -65,6 +80,10 @@ def generate_launch_description():
                 description="Point-LIO parameter yaml.",
             ),
             DeclareLaunchArgument("use_intra_process", default_value="true"),
+            DeclareLaunchArgument("container_library_path", default_value=default_library_path,
+                                 description="Library search path scoped to this container."),
+            DeclareLaunchArgument("container_preload", default_value=os.environ.get("LD_PRELOAD", ""),
+                                 description="Libraries preloaded only by this container."),
             DeclareLaunchArgument(
                 "container_name",
                 default_value="livox_pointlio_container",
@@ -72,7 +91,7 @@ def generate_launch_description():
             DeclareLaunchArgument("log_level", default_value="info"),
             DeclareLaunchArgument(
                 "pointlio_imu_topic",
-                default_value="livox/imu_192_168_1_135",
+                default_value="livox/imu_192_168_1_100",
             ),
             container,
         ]

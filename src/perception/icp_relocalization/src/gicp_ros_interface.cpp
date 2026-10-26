@@ -30,6 +30,8 @@ GicpRosInterface::GicpRosInterface(const rclcpp::NodeOptions & options)
   }
 
   map_frame_ = this->declare_parameter<std::string>("map_frame", "map");
+  wait_for_initial_pose_ = this->declare_parameter<bool>("wait_for_initial_pose", false);
+  robot_base_frame_ = this->declare_parameter<std::string>("robot_base_frame", "mapping_ground");
   visualization_en_ = this->declare_parameter<bool>("visualization_en", true);
   source_cloud_topic_ = this->declare_parameter<std::string>("source_cloud_topic", "/livox/stdpc");
   alignment_frequency_ = this->declare_parameter<double>("alignment_frequency", 1.0);
@@ -256,6 +258,15 @@ GicpRosInterface::GicpRosInterface(const rclcpp::NodeOptions & options)
   tf_broadcaster_ = std::make_shared<tf2_ros::TransformBroadcaster>(this);
   tf_buffer_ = std::make_unique<tf2_ros::Buffer>(this->get_clock());
   tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
+  if (wait_for_initial_pose_) {
+    rclcpp::SubscriptionOptions pose_options;
+    // Serialize pose resets and the FSM; never reset a running alignment.
+    pose_options.callback_group = callback_group_compute_;
+    initial_pose_sub_ = this->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
+      "/initialpose", 10,
+      std::bind(&GicpRosInterface::initialPoseCallback, this, std::placeholders::_1), pose_options);
+    RCLCPP_INFO(get_logger(), "Waiting for RViz 2D Pose Estimate in %s", map_frame_.c_str());
+  }
 
   accumulated_cloud_ = std::make_shared<PointCloud>();
   current_source_cloud_ = std::make_shared<PointCloud>();
@@ -279,7 +290,7 @@ GicpRosInterface::GicpRosInterface(const rclcpp::NodeOptions & options)
     std::bind(
       &GicpRosInterface::relocalizeServiceCallback, this, std::placeholders::_1, std::placeholders::_2),
     rmw_qos_profile_services_default,
-    callback_group_utility_);
+    callback_group_compute_);
 }
 
 void GicpRosInterface::activateLidarSubscription()
@@ -349,7 +360,7 @@ void GicpRosInterface::tfPublishTimerCallback()
   Eigen::Matrix4f pose_snapshot = Eigen::Matrix4f::Identity();
   {
     std::lock_guard<std::mutex> lock(pose_mtx_);
-    if (!gicp_initialized_) {
+    if (wait_for_initial_pose_ ? !tf_confirmed_ : !gicp_initialized_) {
       return;
     }
     pose_snapshot = map_to_camera_init_;
@@ -366,7 +377,12 @@ void GicpRosInterface::relocalizeServiceCallback(
             << color_text::RESET << std::endl;
 
   // 1. Reset State
-  mode_ = Mode::MULTI_GUESS;
+  mode_ = wait_for_initial_pose_ ? Mode::INITIAL_GUESS : Mode::MULTI_GUESS;
+  if (wait_for_initial_pose_) {
+    initial_pose_received_ = false;
+    std::lock_guard<std::mutex> lock(pose_mtx_);
+    tf_confirmed_ = false;
+  }
   state_ = State::UNINITIALIZED;
   converged_count_ = 0;
   has_localized_once_ = false;
@@ -396,7 +412,63 @@ void GicpRosInterface::relocalizeServiceCallback(
   startFsmTimer();
 
   response->success = true;
-  response->message = "Relocalization process restarted.";
+  response->message = wait_for_initial_pose_ ? "Waiting for a new /initialpose." :
+    "Relocalization process restarted.";
+}
+
+void GicpRosInterface::initialPoseCallback(
+  const geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr msg)
+{
+  const auto & pose = msg->pose.pose;
+  const Eigen::Quaterniond q(pose.orientation.w, pose.orientation.x,
+    pose.orientation.y, pose.orientation.z);
+  if (msg->header.frame_id != map_frame_ || !std::isfinite(pose.position.x) ||
+      !std::isfinite(pose.position.y) || !q.coeffs().allFinite() || q.norm() < 1.0e-6) {
+    RCLCPP_WARN(get_logger(), "Reject initialpose: expected a finite pose in %s", map_frame_.c_str());
+    return;
+  }
+  geometry_msgs::msg::TransformStamped odom_to_base;
+  try {
+    odom_to_base = tf_buffer_->lookupTransform("camera_init", robot_base_frame_, tf2::TimePointZero);
+  } catch (const tf2::TransformException & error) {
+    RCLCPP_WARN(get_logger(), "Initial pose needs live Point-LIO TF: %s", error.what());
+    return;
+  }
+  const Eigen::Isometry3d odom_base = tf2::transformToEigen(odom_to_base);
+  const Eigen::Matrix3d rotation = q.normalized().toRotationMatrix();
+  const double desired_yaw = std::atan2(rotation(1, 0), rotation(0, 0));
+  const double odom_yaw = std::atan2(odom_base.linear()(1, 0), odom_base.linear()(0, 0));
+  const double yaw = wrappedYawDifference(desired_yaw, odom_yaw);
+  const double x = odom_base.translation().x(), y = odom_base.translation().y();
+  // RViz specifies map->robot, not map->camera_init. Both PCD and runtime
+  // cloud keep the IMU world Z datum; a 2D ground click must not shift that Z.
+  initial_pose_ = {pose.position.x - std::cos(yaw) * x + std::sin(yaw) * y,
+    pose.position.y - std::sin(yaw) * x - std::cos(yaw) * y, 0.0, 0.0, 0.0, yaw};
+  {
+    std::lock_guard<std::mutex> lock(pose_mtx_);
+    tf_confirmed_ = false;
+    gicp_initialized_ = false;
+  }
+  {
+    std::lock_guard<std::mutex> lock(cloud_mtx_);
+    accumulated_cloud_->clear();
+    current_accumulated_frames_ = 0;
+  }
+  initial_pose_received_ = true;
+  has_localized_once_ = false;
+  has_last_successful_pose_ = false;
+  has_initial_reference_pose_ = false;
+  tracking_lost_count_ = 0;
+  converged_count_ = 0;
+  convergence_poses_.clear();
+  mode_ = Mode::INITIAL_GUESS;
+  state_ = State::UNINITIALIZED;
+  reloc_start_time_ = std::chrono::steady_clock::now();
+  if (!lidar_sub_) {
+    activateLidarSubscription();
+  }
+  startFsmTimer();
+  RCLCPP_INFO(get_logger(), "Initial pose accepted as a seed; waiting for validated GICP localization");
 }
 
 void GicpRosInterface::setupGicp(const std::string & target_pcd_file)
@@ -452,6 +524,11 @@ void GicpRosInterface::publishDefaultPose()
 
 void GicpRosInterface::lidarCallback(const sensor_msgs::msg::PointCloud2::SharedPtr msg)
 {
+  if (wait_for_initial_pose_ && msg->header.frame_id != "camera_init") {
+    RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 5000,
+      "Navigation GICP requires world clouds in camera_init, got %s", msg->header.frame_id.c_str());
+    return;
+  }
   PointCloud::Ptr temp_cloud(new PointCloud());
   pcl::fromROSMsg(*msg, *temp_cloud);
 
@@ -693,6 +770,11 @@ GicpFilter::Result GicpRosInterface::runTwoStageAlignment(const PointCloud::Ptr 
 {
   const auto start_time = std::chrono::high_resolution_clock::now();
   const GicpFilter::PreparedSource prepared_source = gicp_filter_->prepareSource(source_cloud);
+  Eigen::Vector3f source_origin;
+  {
+    std::lock_guard<std::mutex> lock(odom_mtx_);
+    source_origin = latest_odom_pose_.block<3, 1>(0, 3);
+  }
   GicpFilter::Result result;
   double coarse_registration_time_ms = 0.0;
   double fine_registration_time_ms = 0.0;
@@ -700,7 +782,8 @@ GicpFilter::Result GicpRosInterface::runTwoStageAlignment(const PointCloud::Ptr 
   double quality_evaluation_time_ms = 0.0;
 
   if (coarse_required || !fine_alignment_enabled_) {
-    result = gicp_filter_->alignPrepared(prepared_source, initial_guess, -1.0, !fine_alignment_enabled_);
+    result = gicp_filter_->alignPrepared(
+      prepared_source, initial_guess, -1.0, !fine_alignment_enabled_, source_origin);
     coarse_registration_time_ms = result.registration_time_ms;
     local_map_update_time_ms += result.local_map_update_time_ms;
     quality_evaluation_time_ms += result.quality_evaluation_time_ms;
@@ -708,7 +791,7 @@ GicpFilter::Result GicpRosInterface::runTwoStageAlignment(const PointCloud::Ptr 
 
     if (fine_alignment_enabled_ && result.converged && result.final_transformation.allFinite()) {
       result = gicp_filter_->alignPrepared(
-        prepared_source, result.final_transformation, fine_max_correspondence_distance_, true);
+        prepared_source, result.final_transformation, fine_max_correspondence_distance_, true, source_origin);
       fine_registration_time_ms = result.registration_time_ms;
       local_map_update_time_ms += result.local_map_update_time_ms;
       quality_evaluation_time_ms += result.quality_evaluation_time_ms;
@@ -716,7 +799,8 @@ GicpFilter::Result GicpRosInterface::runTwoStageAlignment(const PointCloud::Ptr 
     }
   } else {
     result =
-      gicp_filter_->alignPrepared(prepared_source, initial_guess, fine_max_correspondence_distance_, true);
+      gicp_filter_->alignPrepared(
+        prepared_source, initial_guess, fine_max_correspondence_distance_, true, source_origin);
     fine_registration_time_ms = result.registration_time_ms;
     local_map_update_time_ms = result.local_map_update_time_ms;
     quality_evaluation_time_ms = result.quality_evaluation_time_ms;
@@ -809,6 +893,9 @@ bool GicpRosInterface::isAlignmentAccepted(const GicpFilter::Result & result) co
 
 void GicpRosInterface::runFSM()
 {
+  if (wait_for_initial_pose_ && !initial_pose_received_) {
+    return;
+  }
   // 检查当前状态是否正在进行重定位
   if ((state_ == State::INITIALIZING || state_ == State::CONVERGING) && !has_localized_once_) {
     auto now = std::chrono::steady_clock::now();  // 获取当前时间
@@ -816,7 +903,16 @@ void GicpRosInterface::runFSM()
                      .count();  // 计算时间差（秒）
 
     // 如果超过设定的超时时间
-    if (elapsed > timeout_seconds_) {
+    // <= 0 explicitly disables the legacy default-pose fallback.
+    if (timeout_seconds_ > 0.0 && elapsed > timeout_seconds_) {
+      if (wait_for_initial_pose_) {
+        initial_pose_received_ = false;
+        state_ = State::UNINITIALIZED;
+        std::lock_guard<std::mutex> lock(pose_mtx_);
+        tf_confirmed_ = false;
+        RCLCPP_WARN(get_logger(), "Localization timed out; use RViz 2D Pose Estimate again");
+        return;
+      }
       std::cout << color_text::YELLOW << "[GICP] Relocalization timeout after " << elapsed
                 << " s (threshold: " << timeout_seconds_ << " s), fallback to default pose"
                 << color_text::RESET << std::endl;
@@ -1091,6 +1187,7 @@ void GicpRosInterface::runFSM()
         {
           std::lock_guard<std::mutex> lock(pose_mtx_);
           last_successful_pose_ = map_to_camera_init_;
+          tf_confirmed_ = true;
         }
 
         // Publish TF immediately, then keep periodic publish by tf timer
@@ -1247,6 +1344,12 @@ void GicpRosInterface::runFSM()
       state_ = State::UNINITIALIZED;
       gicp_initialized_ = false;
       convergence_poses_.clear();
+      if (wait_for_initial_pose_) {
+        initial_pose_received_ = false;
+        std::lock_guard<std::mutex> lock(pose_mtx_);
+        tf_confirmed_ = false;
+        RCLCPP_WARN(get_logger(), "Tracking lost: stop the robot and use RViz 2D Pose Estimate again");
+      }
     }
     break;
   }

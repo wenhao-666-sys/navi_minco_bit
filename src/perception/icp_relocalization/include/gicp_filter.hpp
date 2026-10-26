@@ -121,7 +121,8 @@ public:
   Result alignPrepared(const PreparedSource & source,
     const Eigen::Matrix4f & initial_guess,
     double max_correspondence_distance = -1.0,
-    bool evaluate_quality = true);
+    bool evaluate_quality = true,
+    const Eigen::Vector3f & source_origin = Eigen::Vector3f::Zero());
 
   // 获取预处理后的目标点云（地图）
   PointCloud::Ptr getTargetCloud() const { return target_cloud_filtered_; }

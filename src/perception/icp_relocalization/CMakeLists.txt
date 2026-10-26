@@ -28,6 +28,7 @@ find_package(tf2_eigen REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
 find_package(OpenMP REQUIRED)
 find_package(Eigen3 REQUIRED)
+find_package(small_gicp CONFIG REQUIRED)
 
 include_directories(${OpenMP_INCLUDE_DIRS})
 include_directories(${EIGEN3_INCLUDE_DIR})
@@ -44,6 +45,7 @@ target_link_libraries(gicp_filter
   ${PCL_LIBRARIES}
   ${EIGEN3_LIBRARIES}
   OpenMP::OpenMP_CXX
+  small_gicp::small_gicp
 )
 
 # GICP Node Executable (ROS Wrapper)

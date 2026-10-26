@@ -59,7 +59,7 @@ gicp_relocalization_node:
       max_translation_jump: 0.1  # meter
       max_yaw_jump: 0.1         # rad
 
-    timeout_seconds: 10.0  # 超时时间（秒）
+    timeout_seconds: 10.0  # >0: legacy fallback timeout (s); <=0 disables fallback.
     # default_pose_on_timeout: [5.0, 7.0, 0.0, 0.0, 0.0, 0.0]  # 超时后发布的默认位姿
     default_pose_on_timeout: [4.234, 7.3, 0.0, 0.0, 0.0, 0.0]  # 超时后发布的默认位姿
     # default_pose_on_timeout: [13.5, 4.8, 0.0, 0.0, 0.0, 3.14]  # 超时后发布的默认位姿

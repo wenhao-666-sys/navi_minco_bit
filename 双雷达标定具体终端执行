@@ -1,0 +1,118 @@
+先单独检查PTP时间同步,看看时间同步有没有过
+
+
+1. 文件和数据保存位置
+配置已经准备好，不需要重新复制模板：
+内容	路径
+驱动采集参数	[livox_calibration.yaml](/home/robomaster/navi_config/livox_calibration.yaml)
+雷达网络配置	[mixed_MID360_config.json](/home/robomaster/navi_config/mixed_MID360_config.json)
+标定参数、粗测初值	[calibration.yaml](/home/robomaster/calibration.yaml)
+本次录包目录	/home/robomaster/bags/dual_lidar_20261010_01/
+标定结果目录	/home/robomaster/calibration_results/dual_lidar_20261010_01/
+
+
+下面的命令直接粘贴到终端执行，不需要写进源码或 YAML。 ros2 bag record 会自动创建每个 bag 的子目录，保存 .mcap 和 metadata.yaml。
+
+
+
+.每个新终端先加载环境
+所有用于启动驱动、录包、检查和标定的终端，都先执行：
+
+cd /home/robomaster/2027-sentry-navi
+source /opt/ros/humble/setup.bash
+source install/setup.bash
+
+export LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu:/home/robomaster/.local/livox-sdk2/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
+export CALIB_DATA_DIR=/home/robomaster/bags/dual_lidar_20261010_01
+
+mkdir -p "$CALIB_DATA_DIR"
+
+
+本次各 bag 名称必须尚未存在。再次采集时，把目录末尾 _01 改为 _02，保留原数据。
+
+终端A:启动驱动，保持运行
+
+ros2 run livox_ros_driver2 livox_ros_driver2_node --ros-args \
+  -r __node:=livox_calibration_driver \
+  --params-file /home/robomaster/navi_config/livox_calibration.yaml
+  
+  
+终端B:先检查实际参数和话题
+ros2 param get /livox_calibration_driver enable_internal_lidar_merge
+ros2 param get /livox_calibration_driver multi_topic
+ros2 param get /livox_calibration_driver xfer_format
+ros2 topic list -t
+
+
+输出检查:前三项应依次是 False、1、1，并看到：
+/livox/lidar_192_168_1_100  [livox_ros_driver2/msg/CustomMsg]
+/livox/imu_192_168_1_100    [sensor_msgs/msg/Imu]
+/livox/lidar_192_168_1_157  [livox_ros_driver2/msg/CustomMsg]
+/livox/imu_192_168_1_157    [sensor_msgs/msg/Imu]
+
+终端B:如果数据没问题的话,开始录包(这次是只有IMU的)
+让两台雷达和整个安装组件完全静止，录 30—60 秒：
+ros2 bag record -s mcap -o "$CALIB_DATA_DIR/static" \
+  /livox/imu_192_168_1_100 \
+  /livox/imu_192_168_1_157
+到时间后，在录包终端按 Ctrl+C，等待出现 Recording stopped。终端 A 的驱动继续运行。
+静止包只需要两路 IMU，用于估计陀螺仪偏置和提供重力约束。如果想同时保存点云，也可以使用下面四路录制命令，将输出名称改为 static；标定工具读取静止包时会忽略点云。
+
+
+
+还是终端B:准备好场景和运动方式，再开始录 60—90 秒：
+
+ros2 bag record -s mcap -o "$CALIB_DATA_DIR/motion_01" \
+  /livox/lidar_192_168_1_100 \
+  /livox/imu_192_168_1_100 \
+  /livox/lidar_192_168_1_157 \
+  /livox/imu_192_168_1_157
+  
+采集方式：
+- 两台雷达作为一个刚性整体运动，保持相对安装关系固定。
+- 场景让两台共同看到地面、墙角、柱子等不同方向结构。
+- 缓慢左右转动；条件允许时，加入整体轻微俯仰、侧倾，提供不同轴的旋转。
+- 减少快速平移和剧烈晃动，当前工具主要做旋转去畸变。
+- 如果设备固定在底盘上，只能平面运动，就缓慢左右转动并保留静止包，之后检查可观测性与质量结果。
+录制开始后几秒就进入有效运动。 当前配置每 5 帧取一帧、最多处理 200 对；在约 20 Hz 下，点云配准主要使用前约 50 秒的数据，不要把有效运动全部留到末尾。
+结束时在录包终端按 Ctrl+C。
+
+
+
+还是终端B:重新做一段运动，可以改变起始朝向或观察位置，同样录 60—90 秒：
+
+ros2 bag record -s mcap -o "$CALIB_DATA_DIR/motion_02" \
+  /livox/lidar_192_168_1_100 \
+  /livox/imu_192_168_1_100 \
+  /livox/lidar_192_168_1_157 \
+  /livox/imu_192_168_1_157
+  
+这应是重新采集的一段数据。结束后按 Ctrl+C，再到终端 A 停止驱动。
+最终得到：
+/home/robomaster/bags/dual_lidar_20261010_01/
+├── static/       两路 IMU，30—60 秒
+├── motion_01/    四路数据，60—90 秒
+└── motion_02/    四路数据，60—90 秒
+
+
+
+
+
+7.检查包的完整性
+ros2 bag info "$CALIB_DATA_DIR/static"
+ros2 bag info "$CALIB_DATA_DIR/motion_01"
+ros2 bag info "$CALIB_DATA_DIR/motion_02"
+
+确认静止包有两路 IMU，两个运动包都有四路数据，且消息数量均非零。当前点云约 20 Hz、IMU 约 200 Hz，所以录制 60 秒时，每台大致有 1200 帧点云、12000 条 IMU；这是数量参考，具体以实际记录为准。
+
+
+8. 录完后离线标定
+程序直接读取 bag，不需要 ros2 bag play：
+ros2 run dual_lidar_calibration calibrate \
+  --bag "$CALIB_DATA_DIR/motion_01" \
+  --static-bag "$CALIB_DATA_DIR/static" \
+  --config /home/robomaster/calibration.yaml \
+  --output /home/robomaster/calibration_results/dual_lidar_20261010_01/motion_01
+echo $?
+随后用 motion_02 重跑，将 --bag 和 --output 末尾都改成 motion_02，比较两次结果。
+退出码 0 表示通过工具质量门槛，2 表示质量未通过，1 表示输入或运行错误。还要检查 summary.yaml、点云预览和两次结果的一致性，通过后再把最终外参写入正式驱动配置。

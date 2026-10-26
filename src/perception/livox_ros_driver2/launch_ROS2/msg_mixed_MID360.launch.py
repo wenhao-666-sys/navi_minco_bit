@@ -15,12 +15,13 @@ lvx_file_path = '/home/livox/livox_test.lvx'
 cmdline_bd_code = 'livox0000000001'
 enable_internal_lidar_merge = True
 enable_merge_debug = True
-merge_front_ip = '192.168.1.135'
-merge_back_ip = '192.168.1.122'
+merge_front_ip = '192.168.1.100'
+merge_back_ip = '192.168.1.157'
 merge_output_topic = 'livox/lidar'
 merge_frame_id = 'livox_frame'
 merge_max_interval_ms = 5.0
-merge_extrinsic_back_to_front = [0.0, 0.4, 0.0, -0.35453, 0.0, 0.0]
+# motion_05 (2026-10-19): secondary .157 -> main .100, m/rad.
+merge_extrinsic_back_to_front = [0.0022315174364019173, -0.31346669249107389, -0.34019806220633841, -1.5276458927193575, 3.1248038988881843, 3.1356637091557915]
 
 cur_path = os.path.split(os.path.realpath(__file__))[0] + '/'
 # However, if you want to keep the relative path logic from your example, 

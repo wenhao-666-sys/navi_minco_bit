@@ -1,0 +1,43 @@
+--- a/src/rclcpp/executor.cpp
++++ b/src/rclcpp/executor.cpp
+@@ -367,10 +367,19 @@
+     auto weak_node_ptr = it->second;
+     auto shared_node_ptr = weak_node_ptr.lock();
+     auto group_ptr = it->first.lock();
++    const auto weak_group_ptr = it->first;
+ 
+     // Increment iterator before removing in case it's invalidated
+     it++;
+-    if (shared_node_ptr == node_ptr) {
++    if (shared_node_ptr == node_ptr && !group_ptr) {
++      weak_groups_to_nodes_associated_with_executor_.erase(weak_group_ptr);
++      weak_groups_to_nodes_.erase(weak_group_ptr);
++      auto guard = weak_groups_to_guard_conditions_.find(weak_group_ptr);
++      if (guard != weak_groups_to_guard_conditions_.end()) {
++        memory_strategy_->remove_guard_condition(guard->second);
++        weak_groups_to_guard_conditions_.erase(guard);
++      }
++    } else if (shared_node_ptr == node_ptr) {
+       remove_callback_group_from_map(
+         group_ptr,
+         weak_groups_to_nodes_associated_with_executor_,
+@@ -690,6 +699,7 @@
+ Executor::wait_for_work(std::chrono::nanoseconds timeout)
+ {
+   TRACEPOINT(rclcpp_executor_wait_for_work, timeout.count());
++  std::vector<rclcpp::CallbackGroup::SharedPtr> groups_alive;
+   {
+     std::lock_guard<std::mutex> guard(mutex_);
+ 
+@@ -699,6 +709,11 @@
+     // allowed to add to another executor
+     add_callback_groups_from_nodes_associated_to_executor();
+ 
++    for (const auto & entry : weak_groups_to_nodes_) {
++      if (auto group = entry.first.lock()) {
++        groups_alive.push_back(std::move(group));
++      }
++    }
+     // Collect the subscriptions and timers to be waited on
+     memory_strategy_->clear_handles();
+     bool has_invalid_weak_groups_or_nodes =

@@ -1,3 +1,18 @@
+vel_rotate:
+  ros__parameters:
+    init_spin_speed: 0.0  # rad/s, added to MPC angular.z; /cmd_spin can override
+    timeout_sec: 0.25  # stale /serial/receive or /cmd_vel_mpc -> zero velocity
+
+amcl:
+  ros__parameters:
+    use_sim_time: False
+    global_frame_id: map
+    odom_frame_id: camera_init
+    base_frame_id: mapping_ground
+    scan_topic: /scan
+    robot_model_type: "nav2_amcl::OmniMotionModel"
+    tf_broadcast: True
+
 bt_navigator:
   ros__parameters:
     use_sim_time: False
@@ -351,12 +366,13 @@ planner_server:
 
         ros_callback:
           enable: true
-          cloud_topic: /cloud_registered_full
+          cloud_topic: /cloud_registered_filtered
           odom_topic: /aft_mapped_to_init
           odom_timeout: 2.0
           update_period_ms: 20
 
-        # 入图前点云区域滤除；关闭时不创建过滤器，保持原始 ROGMap 数据链路。
+        # 固定场地框选过滤器仍关闭；导航入口使用 pointcloud_self_filter
+        # 在 body 坐标系裁掉车体后，再把 /cloud_registered_filtered 送入 ROGMap。
         cloud_filter:
           enable: false
           z_offset: -1.0

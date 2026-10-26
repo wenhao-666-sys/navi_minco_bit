@@ -1,0 +1,10 @@
+# Main lidar .100. Height currently uses the user-measured housing center;
+# verify the small housing-center / point-cloud-origin offset before navigation.
+lidar_height: 0.42478
+# User confirmed rotation about local x by 45 degrees. The negative sign is
+# inferred from the stationary bag (IMU roll about -46 degrees); verify on site.
+lidar_roll_rad: -0.7853981633974483
+obstacle_min_height: 0.10
+obstacle_max_height: 1.20
+resolution: 0.05
+save_interval: 10.0

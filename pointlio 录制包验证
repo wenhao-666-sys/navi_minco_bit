@@ -1,0 +1,39 @@
+# 终端 A：PTP。已有正常运行的服务时保留，不要重复启动。
+sudo bash /home/robomaster/mid360-ptp/start.sh enp2s0
+
+
+# 终端 B：驱动 + Point-LIO。每个新终端都需要重新加载下面的环境。
+cd /home/robomaster/2027-sentry-navi
+source /opt/ros/humble/setup.bash
+source install/setup.bash
+ros2 launch point_lio mixed_livox_pointlio_intra_process.launch.py
+
+
+# 终端 C：录包。先确认终端 B 两个组件均加载成功，且 IMU 初始化完成。
+# 先观察点云和 odom 的实际频率；每条观察数秒后 Ctrl+C，再执行下一条。
+source /opt/ros/humble/setup.bash
+source /home/robomaster/2027-sentry-navi/install/setup.bash
+ros2 pkg prefix livox_ros_driver2
+ros2 topic hz /livox/lidar
+ros2 topic hz /aft_mapped_to_init
+
+# 先录约 10 秒短包，Ctrl+C 后核对消息数非零；通过后重新录正式动作。
+source /opt/ros/humble/setup.bash
+source /home/robomaster/2027-sentry-navi/install/setup.bash
+
+ros2 pkg prefix livox_ros_driver2
+
+ros2 bag record \
+  -o "$HOME/bags/pointlio_validation_$(date +%Y%m%d_%H%M%S)" \
+  /livox/lidar \
+  /livox/imu_192_168_1_100 \
+  /livox/imu_192_168_1_157 \
+  /aft_mapped_to_init \
+  /cloud_registered_full \
+  /tf \
+  /tf_static
+  
+  
+  
+# Ctrl+C 正常停止录包后查询，将目录名替换为刚生成的真实目录。
+ros2 bag info "$HOME/bags/实际生成的目录名"

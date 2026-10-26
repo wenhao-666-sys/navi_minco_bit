@@ -458,7 +458,8 @@ GicpFilter::Result GicpFilter::align(const PointCloud::Ptr & source_cloud,
 GicpFilter::Result GicpFilter::alignPrepared(const PreparedSource & source,
   const Eigen::Matrix4f & initial_guess,
   const double max_correspondence_distance,
-  const bool evaluate_quality)
+  const bool evaluate_quality,
+  const Eigen::Vector3f & source_origin)
 {
   if (!source.cropped_cloud || source.cropped_cloud->empty() || !source.registration_cloud ||
       source.registration_cloud->empty() || !global_map_ || global_map_->empty()) {
@@ -472,7 +473,12 @@ GicpFilter::Result GicpFilter::alignPrepared(const PreparedSource & source,
 
   // 在精配准前根据当前先验位姿更新局部地图
   const auto local_map_start = std::chrono::high_resolution_clock::now();
-  updateLocalMap(initial_guess);
+  // Registered clouds are already in camera_init. Their frame origin stays
+  // at power-on; the local target ROI must follow the moving robot instead.
+  Eigen::Matrix4f local_map_pose = initial_guess;
+  local_map_pose.block<3, 1>(0, 3) =
+    initial_guess.block<3, 3>(0, 0) * source_origin + initial_guess.block<3, 1>(0, 3);
+  updateLocalMap(local_map_pose);
   const double local_map_update_time_ms =
     std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now() - local_map_start)
       .count();

@@ -50,6 +50,7 @@
 #include <chrono>
 #include <cmath>
 #include <memory>
+#include <shared_mutex>
 #include <utility>
 
 namespace rog_map {
@@ -57,6 +58,11 @@ using namespace super_utils;
 
 class ROGMapROS : public ROGMap
 {
+  struct CallbackState {
+    std::shared_mutex mutex;
+    bool stopped{false};
+  };
+  std::shared_ptr<CallbackState> callback_state_{std::make_shared<CallbackState>()};
   rclcpp::Node::SharedPtr nh_;
   rclcpp_lifecycle::LifecycleNode::SharedPtr lifecycle_nh_;
   rclcpp::node_interfaces::NodeBaseInterface::SharedPtr node_base_;
@@ -715,7 +721,10 @@ class ROGMapROS : public ROGMap
         node_topics_,
         node_timers_,
         cfg_,
-        std::bind(&ROGMapROS::vizCallback, this));
+        [this, state = callback_state_]() {
+          std::shared_lock<std::shared_mutex> lock(state->mutex);
+          if (!state->stopped) { vizCallback(); }
+        });
       const auto & pubs = visualizer_driver_->publishers();
       vm_.occ_pub = pubs.occ_pub;
       vm_.raw_occ_pub = pubs.raw_occ_pub;
@@ -743,23 +752,44 @@ class ROGMapROS : public ROGMap
       rclcpp::SubscriptionOptions so;
       so.callback_group = rc_.odom_me_cbk_group;
       rc_.odom_sub = createSubscription<nav_msgs::msg::Odometry>(
-        cfg_.odom_topic, qos, std::bind(&ROGMapROS::odomCallback, this, std::placeholders::_1), so);
+        cfg_.odom_topic, qos, [this, state = callback_state_](nav_msgs::msg::Odometry::SharedPtr msg) {
+          std::shared_lock<std::shared_mutex> lock(state->mutex);
+          if (!state->stopped) { odomCallback(msg); }
+        }, so);
       so.callback_group = rc_.cloud_me_cbk_group;
       so.use_intra_process_comm = rclcpp::IntraProcessSetting::Enable;
       rc_.cloud_sub = createSubscription<sensor_msgs::msg::PointCloud2>(
         cfg_.cloud_topic,
         rclcpp::SensorDataQoS().keep_last(1),
-        [this](sensor_msgs::msg::PointCloud2::UniquePtr msg) { this->cloudCallback(std::move(msg)); },
+        [this, state = callback_state_](sensor_msgs::msg::PointCloud2::UniquePtr msg) {
+          std::shared_lock<std::shared_mutex> lock(state->mutex);
+          if (!state->stopped) { cloudCallback(std::move(msg)); }
+        },
         so);
       rc_.update_cbk_group = createCallbackGroup(rclcpp::CallbackGroupType::MutuallyExclusive);
       rc_.update_timer = createWallTimer(std::chrono::milliseconds(cfg_.update_period_ms),
-        std::bind(&ROGMapROS::updateCallback, this),
+        [this, state = callback_state_]() {
+          std::shared_lock<std::shared_mutex> lock(state->mutex);
+          if (!state->stopped) { updateCallback(); }
+        },
         rc_.update_cbk_group);
     }
   }
 
 public:
   typedef shared_ptr<ROGMapROS> Ptr;
+
+  ~ROGMapROS() override
+  {
+    // Queued callbacks own this state; drain active callbacks before freeing the map.
+    std::unique_lock<std::shared_mutex> lock(callback_state_->mutex);
+    callback_state_->stopped = true;
+    if (rc_.update_timer) { rc_.update_timer->cancel(); }
+    rc_.update_timer.reset();
+    rc_.cloud_sub.reset();
+    rc_.odom_sub.reset();
+    if (visualizer_driver_) { visualizer_driver_->reset(); }
+  }
 
   ROGMapROS(const rclcpp_lifecycle::LifecycleNode::SharedPtr nh,
     const rog_map::Config & cfg,

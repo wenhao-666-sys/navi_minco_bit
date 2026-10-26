@@ -29,7 +29,7 @@ def generate_launch_description():
                     "pointlio_params_file": PathJoinSubstitution(
                         [FindPackageShare("point_lio"), "config", "mid360.yaml"]
                     ),
-                    "pointlio_imu_topic": "livox/imu_192_168_1_135",
+                    "pointlio_imu_topic": "livox/imu_192_168_1_100",
                     "use_intra_process": "true",
                     "container_name": "livox_pointlio_container",
                     "log_level": "info",

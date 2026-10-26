@@ -1,0 +1,52 @@
+# Only used by navigation2.launch.py localization:=gicp.
+# The target path is supplied from the verified map bundle at launch.
+gicp_relocalization_node:
+  ros__parameters:
+    mode: initial_guess
+    wait_for_initial_pose: true
+    robot_base_frame: mapping_ground
+    map_frame: map
+    source_cloud_topic: /cloud_registered_full
+    visualization_en: true
+    alignment_frequency: 2.0
+    tf_publish_frequency: 20.0
+    accumulate_frames: 3
+    enable_continuous_relocalization: true
+    max_tracking_lost_count: 10
+    # Never claim successful localization from a hard-coded timeout pose.
+    timeout_seconds: 0.0
+    initial_pose: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+    gicp:
+      score_threshold: -1.0
+      normalized_score_threshold: 0.2
+      min_inlier_ratio: 0.5
+      min_overlap_ratio: 0.5
+      target_voxel_leaf_size: 0.10
+      source_voxel_leaf_size: 0.10
+      local_map_radius: 25.0
+      max_correspondence_distance: 1.0
+      max_iterations: 50
+      fine_alignment:
+        enable: true
+        coarse_first_window_only: true
+        max_correspondence_distance: 0.3
+    converged_count_threshold: 3
+    convergence:
+      max_xy_spread: 0.15
+      max_yaw_spread: 0.04
+    initial_pose_guard:
+      enable: true
+      max_translation_correction: 1.5
+      max_yaw_correction: 0.7
+    continuous_relocalization:
+      max_translation_jump: 0.2
+      max_yaw_jump: 0.15
+    # World-frame coordinates move away from the power-on origin; never crop
+    # these clouds to a fixed +/-8 m cube. Target ROI follows live odometry.
+    source_crop:
+      enable: false
+    height_filter:
+      enable: false
+    results:
+      enable: true
+      path: /tmp/gicp_navigation_results.csv

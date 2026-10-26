@@ -19,9 +19,17 @@ find_package(ament_cmake REQUIRED)
 # further dependencies manually.
 # find_package(<dependency> REQUIRED)
 
-install(DIRECTORY launch maps config params
+install(DIRECTORY launch maps config params scripts
   DESTINATION share/${PROJECT_NAME}
 )
+
+install(PROGRAMS scripts/pointcloud_self_filter.py
+  DESTINATION lib/${PROJECT_NAME}
+  RENAME pointcloud_self_filter)
+
+# Nested private directory: not added to the workspace LD_LIBRARY_PATH.
+install(DIRECTORY runtime DESTINATION lib/${PROJECT_NAME}
+  PATTERN ".gitignore" EXCLUDE)
 
 
 ament_package()

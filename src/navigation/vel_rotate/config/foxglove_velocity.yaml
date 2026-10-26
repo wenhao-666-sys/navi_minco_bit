@@ -1,0 +1,13 @@
+/**:
+  ros__parameters:
+    address: 127.0.0.1
+    port: 8765
+    num_threads: 2
+    capabilities: [connectionGraph]
+    topic_whitelist:
+      - '^/cmd_vel_rotate$'
+      - '^/cmd_vel_real$'
+      - '^/cmd_vel_mpc$'
+      - '^/serial/send$'
+      - '^/serial/receive$'
+    sysinfo: false
