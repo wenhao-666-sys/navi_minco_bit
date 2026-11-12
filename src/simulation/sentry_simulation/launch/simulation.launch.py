@@ -2,11 +2,14 @@
 
 import math
 import os
+import platform
 
 import yaml
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, OpaqueFunction
+from launch.actions import (
+    DeclareLaunchArgument, IncludeLaunchDescription, OpaqueFunction, SetEnvironmentVariable,
+)
 from launch.conditions import IfCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
@@ -108,7 +111,7 @@ def _launch_setup(context, package_share):
             "acceleration_limit": 29.43,
             "angular_velocity_limit": 35.0,
             "dynamic_acceleration_limit": 4.0,
-            "vertical_dynamic_acceleration_limit": 0.0,
+            "vertical_dynamic_acceleration_limit": 1000.0,
         }],
     )
 
@@ -131,6 +134,8 @@ def _launch_setup(context, package_share):
                     "right_rear_input_topic": "/sim/lidar/right/rear/points",
                     "output_topic": "/livox/lidar",
                     "output_frame_id": "sim_lidar",
+                    "ground_truth_topic": "/sim/ground_truth/odom",
+                    "lidar_pose_in_model": [0.0, -0.2, 0.3, 0.0, 0.0, 0.0],
             "left_sensor_pose": [-0.0496, 0.352530918687, 0.0, -0.5835987756, 0.0, 0.0],
             "right_sensor_pose": [-0.0496, 0.047469081313, 0.0, 0.5835987756, 0.0, 0.0],
                     "pattern_file": mid360_pattern_path,
@@ -241,6 +246,21 @@ def _launch_setup(context, package_share):
         bridge,
         imu_filter,
         point_lio_container,
+        Node(
+            package="navi2",
+            executable="pointcloud_self_filter",
+            name="pointcloud_self_filter",
+            output="screen",
+            parameters=[{
+                "use_sim_time": True,
+                "input_topic": "/cloud_registered_full",
+                "output_topic": "/cloud_registered_filtered",
+                "body_frame": "body",
+                "min_x": -0.45, "max_x": 0.45,
+                "min_y": -0.45, "max_y": 0.45,
+                "min_z": -0.30, "max_z": 1.20,
+            }],
+        ),
         *localization_actions,
         Node(
             package="nav2_map_server",
@@ -291,7 +311,19 @@ def generate_launch_description():
         raise RuntimeError(
             f"sentry_simulation share directory is invalid: {package_share}"
         )
+    # MVS may prepend an older libusb to LD_LIBRARY_PATH. PCL requires the
+    # system libusb's libusb_set_option symbol in all simulation processes.
+    system_libusb = os.path.join(
+        "/usr/lib", f"{platform.machine()}-linux-gnu", "libusb-1.0.so.0"
+    )
+    runtime_environment = []
+    if os.path.isfile(system_libusb):
+        runtime_environment.append(SetEnvironmentVariable(
+            "LD_PRELOAD",
+            " ".join(filter(None, [system_libusb, os.environ.get("LD_PRELOAD", "")])),
+        ))
     return LaunchDescription([
+        *runtime_environment,
         DeclareLaunchArgument(
             "world", default_value="rmuc_2025",
             description="rmuc_2024, rmul_2024, rmuc_2025, rmuc_2026, or rmul_2025",

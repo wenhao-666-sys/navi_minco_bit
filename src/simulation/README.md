@@ -9,6 +9,7 @@ Gazebo 左右双 MID360（每颗由前/后 180° GPU LiDAR 拼接）+ 水平 IMU
      (/livox/lidar: livox_ros_driver2/msg/CustomMsg)
   -> Point-LIO (/aft_mapped_to_init, /cloud_registered_full)
   -> model PCD GICP (pcd_map -> camera_init, 2025/2026 场地)
+  -> pointcloud_self_filter (/cloud_registered_filtered，ROGMap/STVL 输入)
   -> ROGMap + MINCO planner
   -> Minco MPC controller (/cmd_vel_mpc, 世界坐标系)
   -> sentry_sim_cmd_adapter
@@ -17,6 +18,10 @@ Gazebo 左右双 MID360（每颗由前/后 180° GPU LiDAR 拼接）+ 水平 IMU
 
 仿真不会启动 `communication`，也不会使用真车裁判系统或下位机链路。Gazebo 的
 `/sim/ground_truth/odom` 只用于验真，不会替代 Point-LIO 里程计作为导航输入。
+
+GICP 独立订阅 `/cloud_registered_full`；导航感知使用 `pointcloud_self_filter` 输出的
+`/cloud_registered_filtered`。过滤范围与实车一致：删除 `body` 坐标系中
+`x/y ∈ [-0.45, 0.45] m`、`z ∈ [-0.30, 1.20] m` 的盒内点，盒外点保留。
 
 ## 功能和边界
 
@@ -155,7 +160,8 @@ ros2 launch sentry_simulation simulation.launch.py \
 | `/livox/lidar` | `livox_ros_driver2/msg/CustomMsg` | 双 MID360 融合后的 Point-LIO 输入 |
 | `/sim/imu` | `sensor_msgs/msg/Imu` | 仿真 IMU 滤波输出 |
 | `/aft_mapped_to_init` | `nav_msgs/msg/Odometry` | Point-LIO 里程计和导航状态 |
-| `/cloud_registered_full` | `sensor_msgs/msg/PointCloud2` | ROGMap 与 GICP 使用的完整点云 |
+| `/cloud_registered_full` | `sensor_msgs/msg/PointCloud2` | GICP 与自身点云过滤器使用的完整点云 |
+| `/cloud_registered_filtered` | `sensor_msgs/msg/PointCloud2` | 删除车体周围盒内点后，供 ROGMap 与全局/局部 STVL 使用 |
 | `/cmd_vel_mpc` | `geometry_msgs/msg/Twist` | MPC 输出的世界系速度 |
 | `/sim/cmd_vel` | `geometry_msgs/msg/Twist` | 转换后发送给 Gazebo 底盘的车体系速度 |
 | `/sim/ground_truth/odom` | `nav_msgs/msg/Odometry` | Gazebo 真值，仅用于验收 |

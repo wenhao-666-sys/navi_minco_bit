@@ -458,6 +458,19 @@ bool MincoMpcController::buildReferenceFromOptPath(
     return false;
   }
 
+  // Do not keep driving from a planner message after the planner has stopped.
+  // The controller runs faster than the planner, so a cached trajectory must
+  // have an explicit lifetime independent of the command watchdog.
+  constexpr double kOptPathTimeoutSec = 0.5;
+  const rclcpp::Time opt_stamp(opt->header.stamp, RCL_ROS_TIME);
+  if (opt_stamp.nanoseconds() > 0 && now > opt_stamp &&
+      (now - opt_stamp).seconds() > kOptPathTimeoutSec) {
+    std::lock_guard<std::mutex> lk(data_mtx_);
+    latest_opt_path_.reset();
+    has_tracked_ref_ = false;
+    return false;
+  }
+
   // 坐标系转换处理
   std::vector<ros_interfaces::msg::PositionCommand> cmds;
   if (!transformPathToOdom(opt, cmds)) {

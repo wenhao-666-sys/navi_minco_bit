@@ -5,9 +5,8 @@
     num_threads: 2
     capabilities: [connectionGraph]
     topic_whitelist:
-      - '^/cmd_vel_rotate$'
-      - '^/cmd_vel_real$'
+      - '^/nav/cmd_vel_real$'
       - '^/cmd_vel_mpc$'
-      - '^/serial/send$'
-      - '^/serial/receive$'
+      - '^/nav/serial/send$'
+      - '^/nav/serial/receive$'
     sysinfo: false

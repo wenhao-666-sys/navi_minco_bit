@@ -24,7 +24,7 @@
   <exec_depend>python3-numpy</exec_depend>
   <exec_depend>python3-yaml</exec_depend>
   <exec_depend>rviz2</exec_depend>
-  <exec_depend>vel_rotate</exec_depend>
+  <exec_depend>nav_serial_driver</exec_depend>
   <exec_depend>nav2_bringup</exec_depend>
   <exec_depend>nav2_common</exec_depend>
   <exec_depend>minco_planner</exec_depend>

@@ -287,6 +287,8 @@ def generate_launch_description():
                                              description='Full path to param file to load'),
         launch.actions.DeclareLaunchArgument('localization', default_value='amcl',
                                              description='amcl keeps the current 2D localization; gicp uses a verified map.pcd bundle.'),
+        launch.actions.DeclareLaunchArgument('start_serial', default_value='true'),
+        launch.actions.DeclareLaunchArgument('serial_port', default_value='/dev/rm_nav0'),
         launch.actions.DeclareLaunchArgument('start_ptp', default_value='true',
                                              description='Start the MID360 PTP helper; false reuses existing PTP.'),
         launch.actions.DeclareLaunchArgument('start_sensors', default_value='true',
@@ -330,12 +332,13 @@ def generate_launch_description():
                     'planner_container_name': 'livox_pointlio_container'}.items(),
             ),
         ]),
-        launch_ros.actions.Node(
-            package='vel_rotate',
-            executable='vel_rotate_node',
-            name='vel_rotate',
-            parameters=[nav2_param_path],
-            output='screen'),
+        launch.actions.IncludeLaunchDescription(
+            PythonLaunchDescriptionSource(os.path.join(
+                get_package_share_directory('nav_serial_driver'), 'launch', 'serial.launch.py')),
+            launch_arguments={
+                'start_serial': launch.substitutions.LaunchConfiguration('start_serial'),
+                'port_name': launch.substitutions.LaunchConfiguration('serial_port'),
+                'use_sim_time': use_sim_time}.items()),
         launch_ros.actions.Node(
             package='rviz2',
             executable='rviz2',

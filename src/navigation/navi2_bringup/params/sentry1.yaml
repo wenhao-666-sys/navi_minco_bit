@@ -1,8 +1,3 @@
-vel_rotate:
-  ros__parameters:
-    init_spin_speed: 0.0  # rad/s, added to MPC angular.z; /cmd_spin can override
-    timeout_sec: 0.25  # stale /serial/receive or /cmd_vel_mpc -> zero velocity
-
 amcl:
   ros__parameters:
     use_sim_time: False

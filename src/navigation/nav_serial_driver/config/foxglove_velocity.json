@@ -4,24 +4,24 @@
       "title": "X 速度 (m/s)",
       "paths": [
         {
-          "value": "/cmd_vel_rotate.linear.x",
+          "value": "/cmd_vel_mpc.linear.x",
           "enabled": true,
           "timestampMethod": "receiveTime",
           "label": "导航指令",
           "color": "#4C9AFF"
         },
         {
-          "value": "/serial/send.linear_x",
+          "value": "/nav/serial/send.linear_x",
           "enabled": true,
           "timestampMethod": "receiveTime",
           "label": "串口发送值",
           "color": "#FFAB00"
         },
         {
-          "value": "/cmd_vel_real.linear.x",
+          "value": "/nav/cmd_vel_real.linear.x",
           "enabled": true,
           "timestampMethod": "receiveTime",
-          "label": "编码器实际速度",
+          "label": "电控反馈实际速度",
           "color": "#36B37E"
         }
       ],
@@ -35,24 +35,24 @@
       "title": "Y 速度 (m/s)",
       "paths": [
         {
-          "value": "/cmd_vel_rotate.linear.y",
+          "value": "/cmd_vel_mpc.linear.y",
           "enabled": true,
           "timestampMethod": "receiveTime",
           "label": "导航指令",
           "color": "#4C9AFF"
         },
         {
-          "value": "/serial/send.linear_y",
+          "value": "/nav/serial/send.linear_y",
           "enabled": true,
           "timestampMethod": "receiveTime",
           "label": "串口发送值",
           "color": "#FFAB00"
         },
         {
-          "value": "/cmd_vel_real.linear.y",
+          "value": "/nav/cmd_vel_real.linear.y",
           "enabled": true,
           "timestampMethod": "receiveTime",
-          "label": "编码器实际速度",
+          "label": "电控反馈实际速度",
           "color": "#36B37E"
         }
       ],
@@ -66,24 +66,24 @@
       "title": "角速度 (rad/s)",
       "paths": [
         {
-          "value": "/cmd_vel_rotate.angular.z",
+          "value": "/cmd_vel_mpc.angular.z",
           "enabled": true,
           "timestampMethod": "receiveTime",
           "label": "导航指令",
           "color": "#4C9AFF"
         },
         {
-          "value": "/serial/send.angular_z",
+          "value": "/nav/serial/send.angular_z",
           "enabled": true,
           "timestampMethod": "receiveTime",
           "label": "串口发送值",
           "color": "#FFAB00"
         },
         {
-          "value": "/cmd_vel_real.angular.z",
+          "value": "/nav/cmd_vel_real.angular.z",
           "enabled": true,
           "timestampMethod": "receiveTime",
-          "label": "编码器实际速度",
+          "label": "电控反馈实际速度",
           "color": "#36B37E"
         }
       ],
@@ -97,7 +97,7 @@
       "title": "big_yaw (deg)",
       "paths": [
         {
-          "value": "/serial/receive.big_yaw",
+          "value": "/nav/serial/receive.big_yaw",
           "enabled": true,
           "timestampMethod": "receiveTime",
           "label": "大云台角度",

@@ -39,3 +39,19 @@ test/
 tests/
 test_*
 *_test.*
+
+# Navigation UART deliverables and focused tests.
+!docs/
+docs/*
+!docs/串口通信（导航）.md
+!docs/ai_refactor_records/
+docs/ai_refactor_records/*
+!docs/ai_refactor_records/20261111_nav_serial_driver.md
+!src/navigation/nav_serial_driver/test/
+!src/navigation/nav_serial_driver/test/test_protocol.cpp
+!src/navigation/nav_serial_driver/test/test_pty_integration.py
+
+# Body-cloud filter validation and change record.
+!src/navigation/navi2_bringup/test/
+!src/navigation/navi2_bringup/test/test_pointcloud_self_filter.py
+!docs/ai_refactor_records/20261111_self_filter_tf_fix.md

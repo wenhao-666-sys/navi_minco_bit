@@ -190,8 +190,8 @@ local_costmap:
         observation_sources: mid360
         mid360:
           data_type: PointCloud2
-          # Simulation does not launch the real-robot crop-filter pipeline.
-          topic: /cloud_registered
+          # Share the real-robot self-filter output with ROGMap and global STVL.
+          topic: /cloud_registered_filtered
           marking: true
           clearing: true
           obstacle_range: 8.0
@@ -254,7 +254,7 @@ global_costmap:
         observation_sources: mid360
         mid360:
           data_type: PointCloud2
-          topic: /cloud_registered
+          topic: /cloud_registered_filtered
           sensor_frame: body
           marking: true
           clearing: true
@@ -351,7 +351,7 @@ planner_server:
 
         ros_callback:
           enable: true
-          cloud_topic: /cloud_registered_full
+          cloud_topic: /cloud_registered_filtered
           odom_topic: /aft_mapped_to_init
           odom_timeout: 2.0
           update_period_ms: 20

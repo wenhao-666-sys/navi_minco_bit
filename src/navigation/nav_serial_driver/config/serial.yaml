@@ -1,0 +1,5 @@
+nav_serial_driver:
+  ros__parameters:
+    port_name: /dev/rm_nav0
+    baud_rate: 921600
+    command_timeout: 0.25

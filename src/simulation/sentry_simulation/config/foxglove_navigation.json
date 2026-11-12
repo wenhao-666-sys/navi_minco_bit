@@ -1,0 +1,245 @@
+{
+  "configById": {
+    "Plot!planner": {
+      "title": "MINCO 新轨迹首采样速度（轨迹坐标系）",
+      "paths": [
+        {
+          "value": "/opt_path.cmds[0].velocity.x",
+          "label": "vx",
+          "enabled": true,
+          "timestampMethod": "receiveTime",
+          "color": "#4C9AFF"
+        },
+        {
+          "value": "/opt_path.cmds[0].velocity.y",
+          "label": "vy",
+          "enabled": true,
+          "timestampMethod": "receiveTime",
+          "color": "#FFAB00"
+        },
+        {
+          "value": "/opt_path.cmds[0].vel_norm",
+          "label": "速度模长",
+          "enabled": true,
+          "timestampMethod": "receiveTime",
+          "color": "#36B37E"
+        },
+        {
+          "value": "/opt_path.cmds[0].yaw_dot",
+          "label": "yaw_dot (rad/s)",
+          "enabled": true,
+          "timestampMethod": "receiveTime",
+          "color": "#AB47BC"
+        }
+      ],
+      "xAxisVal": "timestamp",
+      "showLegend": true,
+      "legendDisplay": "top",
+      "isSynced": true,
+      "followingViewWidth": 20
+    },
+    "Plot!mpc": {
+      "title": "MPC 指令 /cmd_vel_mpc（当前仿真 map）",
+      "paths": [
+        {
+          "value": "/cmd_vel_mpc.linear.x",
+          "label": "vx",
+          "enabled": true,
+          "timestampMethod": "receiveTime",
+          "color": "#4C9AFF"
+        },
+        {
+          "value": "/cmd_vel_mpc.linear.y",
+          "label": "vy",
+          "enabled": true,
+          "timestampMethod": "receiveTime",
+          "color": "#FFAB00"
+        },
+        {
+          "value": "/cmd_vel_mpc.angular.z",
+          "label": "wz (rad/s)",
+          "enabled": true,
+          "timestampMethod": "receiveTime",
+          "color": "#36B37E"
+        }
+      ],
+      "xAxisVal": "timestamp",
+      "showLegend": true,
+      "legendDisplay": "top",
+      "isSynced": true,
+      "followingViewWidth": 20
+    },
+    "Plot!body": {
+      "title": "仿真底盘指令 /sim/cmd_vel（车体系）",
+      "paths": [
+        {
+          "value": "/sim/cmd_vel.linear.x",
+          "label": "vx",
+          "enabled": true,
+          "timestampMethod": "receiveTime",
+          "color": "#4C9AFF"
+        },
+        {
+          "value": "/sim/cmd_vel.linear.y",
+          "label": "vy",
+          "enabled": true,
+          "timestampMethod": "receiveTime",
+          "color": "#FFAB00"
+        },
+        {
+          "value": "/sim/cmd_vel.angular.z",
+          "label": "wz (rad/s)",
+          "enabled": true,
+          "timestampMethod": "receiveTime",
+          "color": "#36B37E"
+        }
+      ],
+      "xAxisVal": "timestamp",
+      "showLegend": true,
+      "legendDisplay": "top",
+      "isSynced": true,
+      "followingViewWidth": 20
+    },
+    "Plot!lio": {
+      "title": "LIO 测量 twist（依照消息 child_frame_id）",
+      "paths": [
+        {
+          "value": "/aft_mapped_to_init.twist.twist.linear.x",
+          "label": "vx",
+          "enabled": true,
+          "timestampMethod": "receiveTime",
+          "color": "#4C9AFF"
+        },
+        {
+          "value": "/aft_mapped_to_init.twist.twist.linear.y",
+          "label": "vy",
+          "enabled": true,
+          "timestampMethod": "receiveTime",
+          "color": "#FFAB00"
+        },
+        {
+          "value": "/aft_mapped_to_init.twist.twist.angular.z",
+          "label": "wz (rad/s)",
+          "enabled": true,
+          "timestampMethod": "receiveTime",
+          "color": "#36B37E"
+        }
+      ],
+      "xAxisVal": "timestamp",
+      "showLegend": true,
+      "legendDisplay": "top",
+      "isSynced": true,
+      "followingViewWidth": 20
+    },
+    "Plot!truth": {
+      "title": "Gazebo 真值 twist（依照消息 child_frame_id）",
+      "paths": [
+        {
+          "value": "/sim/ground_truth/odom.twist.twist.linear.x",
+          "label": "vx",
+          "enabled": true,
+          "timestampMethod": "receiveTime",
+          "color": "#4C9AFF"
+        },
+        {
+          "value": "/sim/ground_truth/odom.twist.twist.linear.y",
+          "label": "vy",
+          "enabled": true,
+          "timestampMethod": "receiveTime",
+          "color": "#FFAB00"
+        },
+        {
+          "value": "/sim/ground_truth/odom.twist.twist.angular.z",
+          "label": "wz (rad/s)",
+          "enabled": true,
+          "timestampMethod": "receiveTime",
+          "color": "#36B37E"
+        }
+      ],
+      "xAxisVal": "timestamp",
+      "showLegend": true,
+      "legendDisplay": "top",
+      "isSynced": true,
+      "followingViewWidth": 20
+    },
+    "Plot!imu": {
+      "title": "IMU 加速度：原始与滤波后 (m/s²)",
+      "paths": [
+        {
+          "value": "/sim/imu_raw.linear_acceleration.x",
+          "label": "raw x",
+          "enabled": true,
+          "timestampMethod": "receiveTime",
+          "color": "#4C9AFF"
+        },
+        {
+          "value": "/sim/imu_raw.linear_acceleration.y",
+          "label": "raw y",
+          "enabled": true,
+          "timestampMethod": "receiveTime",
+          "color": "#FFAB00"
+        },
+        {
+          "value": "/sim/imu_raw.linear_acceleration.z",
+          "label": "raw z",
+          "enabled": true,
+          "timestampMethod": "receiveTime",
+          "color": "#36B37E"
+        },
+        {
+          "value": "/sim/imu.linear_acceleration.x",
+          "label": "filtered x",
+          "enabled": true,
+          "timestampMethod": "receiveTime",
+          "color": "#AB47BC"
+        },
+        {
+          "value": "/sim/imu.linear_acceleration.y",
+          "label": "filtered y",
+          "enabled": true,
+          "timestampMethod": "receiveTime",
+          "color": "#FF5630"
+        },
+        {
+          "value": "/sim/imu.linear_acceleration.z",
+          "label": "filtered z",
+          "enabled": true,
+          "timestampMethod": "receiveTime",
+          "color": "#00B8D9"
+        }
+      ],
+      "xAxisVal": "timestamp",
+      "showLegend": true,
+      "legendDisplay": "top",
+      "isSynced": true,
+      "followingViewWidth": 20
+    }
+  },
+  "globalVariables": {},
+  "userNodes": {},
+  "linkedGlobalVariables": [],
+  "playbackConfig": {
+    "speed": 1
+  },
+  "layout": {
+    "direction": "row",
+    "first": {
+      "direction": "column",
+      "first": "Plot!planner",
+      "second": "Plot!mpc"
+    },
+    "second": {
+      "direction": "row",
+      "first": {
+        "direction": "column",
+        "first": "Plot!body",
+        "second": "Plot!lio"
+      },
+      "second": {
+        "direction": "column",
+        "first": "Plot!truth",
+        "second": "Plot!imu"
+      }
+    }
+  }
+}

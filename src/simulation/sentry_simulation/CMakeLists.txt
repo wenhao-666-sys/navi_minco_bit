@@ -7,10 +7,12 @@ endif()
 
 find_package(ament_cmake REQUIRED)
 find_package(ament_cmake_python REQUIRED)
+find_package(Eigen3 REQUIRED)
 find_package(ignition-gazebo6 REQUIRED)
 find_package(ignition-msgs8 REQUIRED)
 find_package(ignition-transport11 REQUIRED)
 find_package(livox_ros_driver2 REQUIRED)
+find_package(nav_msgs REQUIRED)
 find_package(pcl_conversions REQUIRED)
 find_package(PCL REQUIRED COMPONENTS common)
 find_package(rclcpp REQUIRED)
@@ -24,8 +26,8 @@ target_include_directories(pointcloud_adapter_component PUBLIC
   $<INSTALL_INTERFACE:include>
   ${PCL_INCLUDE_DIRS})
 ament_target_dependencies(pointcloud_adapter_component
-  livox_ros_driver2 pcl_conversions rclcpp rclcpp_components sensor_msgs)
-target_link_libraries(pointcloud_adapter_component ${PCL_LIBRARIES})
+  livox_ros_driver2 nav_msgs pcl_conversions rclcpp rclcpp_components sensor_msgs)
+target_link_libraries(pointcloud_adapter_component ${PCL_LIBRARIES} Eigen3::Eigen)
 rclcpp_components_register_nodes(
   pointcloud_adapter_component "sentry_simulation::PointCloudAdapter")
 
@@ -57,7 +59,7 @@ install(FILES ../README.md ../THIRD_PARTY_NOTICES.md
 ament_environment_hooks("${CMAKE_CURRENT_SOURCE_DIR}/env-hooks/gazebo.dsv.in")
 
 ament_export_include_directories(include)
-ament_export_dependencies(livox_ros_driver2 pcl_conversions rclcpp rclcpp_components sensor_msgs)
+ament_export_dependencies(livox_ros_driver2 nav_msgs pcl_conversions rclcpp rclcpp_components sensor_msgs)
 
 if(BUILD_TESTING)
   find_package(ament_cmake_pytest REQUIRED)

@@ -1,0 +1,23 @@
+/**:
+  ros__parameters:
+    address: 127.0.0.1
+    port: 8766
+    use_sim_time: true
+    num_threads: 2
+    capabilities: [connectionGraph]
+    include_hidden: true
+    sysinfo: false
+    topic_whitelist:
+      - '^/clock$'
+      - '^/tf(_static)?$'
+      - '^/map$'
+      - '^/opt_path$'
+      - '^/(opt_path_vis|astar_path_vis|minco_control_points_vis|mpc_predict_path|mpc_real_path|plan)$'
+      - '^/cmd_vel(_mpc|_nav)?$'
+      - '^/sim/cmd_vel$'
+      - '^/aft_mapped_to_init$'
+      - '^/sim/ground_truth/odom$'
+      - '^/sim/imu(_raw)?$'
+      - '^/(navigate_to_pose|follow_path)/_action/status$'
+      - '^/(global_costmap|local_costmap)/costmap(_updates)?$'
+      - '^/rosout$'

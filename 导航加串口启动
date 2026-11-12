@@ -63,7 +63,7 @@ sudo -v
 
 ros2 launch navi2 navigation2.launch.py \
   localization:=gicp \
-  map:="$HOME/maps/pcd_site_20261025_204708/map.yaml" \
+  map:="$HOME/maps/pcd_site_20261024/map.yaml" \
   
   
   

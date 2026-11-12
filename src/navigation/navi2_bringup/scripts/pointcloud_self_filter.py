@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 """Remove the robot body from a world-frame registered point cloud."""
 import math
+import time
+from collections import deque
 
 import numpy as np
 import rclpy
-from rclpy.duration import Duration
+from rclpy.executors import ExternalShutdownException, MultiThreadedExecutor
 from rclpy.node import Node
 from rclpy.qos import qos_profile_sensor_data
 from sensor_msgs.msg import PointCloud2, PointField
-from sensor_msgs_py import point_cloud2
 import tf2_ros
 
 
@@ -43,6 +44,10 @@ class PointCloudSelfFilter(Node):
             PointCloud2, str(self.get_parameter('input_topic').value), self.callback,
             qos_profile_sensor_data)
         self.warned = False
+        self.pending_clouds = deque(maxlen=3)
+        # Both callbacks use the default mutually exclusive group; only TF
+        # reception runs concurrently, so queue access and filtering stay serial.
+        self.pending_timer = self.create_timer(0.005, self._process_pending)
 
     @staticmethod
     def _xyz_array(message):
@@ -61,7 +66,7 @@ class PointCloudSelfFilter(Node):
                               strides=(message.row_step, message.point_step)).reshape(-1)
                    for field in xyz]
         points = np.column_stack(columns).astype(np.float32, copy=False)
-        return points[np.all(np.isfinite(points), axis=1)]
+        return points
 
     @staticmethod
     def _matrix(transform):
@@ -77,48 +82,70 @@ class PointCloudSelfFilter(Node):
         ], dtype=np.float32)
 
     def callback(self, message):
-        try:
-            requested_time = rclpy.time.Time.from_msg(message.header.stamp)
+        self.pending_clouds.append((message, time.monotonic()))
+        self._process_pending()
+
+    def _process_pending(self):
+        while self.pending_clouds:
+            message, queued_at = self.pending_clouds[0]
+            if self.timeout > 0 and time.monotonic() - queued_at >= self.timeout:
+                self.pending_clouds.popleft()
+                if not self.warned:
+                    self.get_logger().warning('Skipping cloud: TF wait budget expired')
+                    self.warned = True
+                continue
             try:
+                requested_time = rclpy.time.Time.from_msg(message.header.stamp)
+                # Nonblocking lookup: leave this frame queued while TF catches
+                # up, instead of sleeping inside the executor callback.
                 transform = self.tf_buffer.lookup_transform(
-                    self.body_frame, message.header.frame_id, requested_time,
-                    timeout=Duration(seconds=self.timeout))
-            except tf2_ros.ExtrapolationException as error:
-                # Point-LIO publishes the cloud and body TF from different
-                # callbacks. A few milliseconds of future extrapolation is
-                # normal; use the newest TF only when it is still within the
-                # configured timeout, and never fall back to an old pose.
-                latest = self.tf_buffer.lookup_transform(
-                    self.body_frame, message.header.frame_id, rclpy.time.Time(),
-                    timeout=Duration(seconds=self.timeout))
-                latest_time = rclpy.time.Time.from_msg(latest.header.stamp)
-                age = requested_time.nanoseconds - latest_time.nanoseconds
-                if age < 0 or age > int(self.timeout * 1.0e9):
-                    raise error
-                transform = latest
-            matrix = self._matrix(transform)
-            points = self._xyz_array(message)
-            body_points = points @ matrix[:, :3].T + matrix[:, 3]
-            inside = ((body_points[:, 0] >= self.bounds[0]) & (body_points[:, 0] <= self.bounds[1]) &
-                      (body_points[:, 1] >= self.bounds[2]) & (body_points[:, 1] <= self.bounds[3]) &
-                      (body_points[:, 2] >= self.bounds[4]) & (body_points[:, 2] <= self.bounds[5]))
-            self.publisher.publish(point_cloud2.create_cloud_xyz32(message.header, points[~inside].tolist()))
-            self.warned = False
-        except (tf2_ros.TransformException, ValueError) as error:
-            if not self.warned:
-                self.get_logger().warning(
-                    f'Skipping cloud until body TF/filter input is valid: {error}')
-                self.warned = True
+                    self.body_frame, message.header.frame_id, requested_time)
+                self._filter_cloud(message, transform)
+                self.warned = False
+            except (tf2_ros.TransformException, ValueError) as error:
+                if (isinstance(error, tf2_ros.TransformException) and
+                        time.monotonic() - queued_at < self.timeout):
+                    return
+                if not self.warned:
+                    self.get_logger().warning(
+                        f'Skipping cloud until body TF/filter input is valid: {error}')
+                    self.warned = True
+            self.pending_clouds.popleft()
+
+    def _filter_cloud(self, message, transform):
+        matrix = self._matrix(transform)
+        points = self._xyz_array(message)
+        finite = np.all(np.isfinite(points), axis=1)
+        body_points = points[finite] @ matrix[:, :3].T + matrix[:, 3]
+        inside = ((body_points[:, 0] >= self.bounds[0]) & (body_points[:, 0] <= self.bounds[1]) &
+                  (body_points[:, 1] >= self.bounds[2]) & (body_points[:, 1] <= self.bounds[3]) &
+                  (body_points[:, 2] >= self.bounds[4]) & (body_points[:, 2] <= self.bounds[5]))
+        keep = finite.copy()
+        keep[finite] = ~inside
+        # Select whole point records, including fields/padding unknown to
+        # this filter. Respect row padding in organized input clouds.
+        records = np.ndarray(
+            (message.height, message.width), dtype=np.dtype((np.void, message.point_step)),
+            buffer=message.data, strides=(message.row_step, message.point_step))
+        data = records.reshape(-1)[keep].tobytes()
+        width = int(np.count_nonzero(keep))
+        self.publisher.publish(PointCloud2(
+            header=message.header, height=1, width=width, fields=message.fields,
+            is_bigendian=message.is_bigendian, point_step=message.point_step,
+            row_step=width * message.point_step, data=data, is_dense=message.is_dense))
 
 
 def main(args=None):
     rclpy.init(args=args)
     node = PointCloudSelfFilter()
+    executor = MultiThreadedExecutor(num_threads=2)
+    executor.add_node(node)
     try:
-        rclpy.spin(node)
-    except KeyboardInterrupt:
+        executor.spin()
+    except (KeyboardInterrupt, ExternalShutdownException):
         pass
     finally:
+        executor.shutdown()
         node.destroy_node()
         if rclpy.ok():
             rclpy.shutdown()

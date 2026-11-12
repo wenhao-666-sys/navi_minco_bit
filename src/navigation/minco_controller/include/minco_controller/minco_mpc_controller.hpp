@@ -129,7 +129,7 @@ private:
 
   // --- Runtime Data Cache ---
   mutable std::mutex data_mtx_;
-  ros_interfaces::msg::MpcPositionCommand::SharedPtr latest_opt_path_;
+  mutable ros_interfaces::msg::MpcPositionCommand::SharedPtr latest_opt_path_;
   nav_msgs::msg::Odometry::SharedPtr latest_odom_;
 
   // --- Reference Tracking State ---

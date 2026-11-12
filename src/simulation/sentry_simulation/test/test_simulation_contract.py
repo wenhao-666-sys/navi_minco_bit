@@ -884,7 +884,7 @@ class SimulationContractTest(unittest.TestCase):
         local_stvl = params["local_costmap"]["local_costmap"]["ros__parameters"][
             "stvl_layer"
         ]
-        self.assertEqual(local_stvl["mid360"]["topic"], "/cloud_registered")
+        self.assertEqual(local_stvl["mid360"]["topic"], "/cloud_registered_filtered")
         controller = params["controller_server"]["ros__parameters"]["FollowPath"]
         self.assertAlmostEqual(controller["lidar_offset_x"], 0.0)
         self.assertAlmostEqual(controller["lidar_offset_y"], 0.0)
@@ -1005,7 +1005,8 @@ class SimulationContractTest(unittest.TestCase):
             "left_rear_cloud_callback",
             "right_front_cloud_callback",
             "right_rear_cloud_callback",
-            "transform_point",
+            "ground_truth_callback",
+            "lidar_pose_at",
             "sync_tolerance_ms",
         ]:
             self.assertIn(token, source)
@@ -1020,23 +1021,16 @@ class SimulationContractTest(unittest.TestCase):
         cmake = (PACKAGE_ROOT / "CMakeLists.txt").read_text(encoding="utf-8")
         self.assertIn("find_package(livox_ros_driver2 REQUIRED)", cmake)
 
-    def test_pointcloud_adapter_uses_instantaneous_gazebo_snapshot_time(self):
+    def test_pointcloud_adapter_preserves_scan_time_and_ground_truth_pose(self):
         source = (PACKAGE_ROOT / "src" / "pointcloud_adapter.cpp").read_text(
             encoding="utf-8"
         )
-        self.assertIn("snapshot_stamp", source)
-        self.assertIn("output->header.stamp = snapshot_stamp", source)
-        self.assertIn(
-            "output->timebase = static_cast<std::uint64_t>(snapshot_stamp.nanoseconds())",
-            source,
-        )
-        self.assertIn("constexpr std::uint32_t snapshot_offset_time = 0", source)
-        self.assertNotIn("scan_start_stamp", source)
-        self.assertNotIn(
-            "scan_period_ * static_cast<double>(offset) /",
-            source,
-            "an instantaneous Gazebo depth snapshot must not be assigned a fake scan sweep",
-        )
+        self.assertIn("ground_truth_callback", source)
+        self.assertIn("lidar_pose_at", source)
+        self.assertIn("scan_start", source)
+        self.assertIn("converted.offset_time", source)
+        self.assertIn("point_from_world", source)
+        self.assertNotIn("snapshot_offset_time = 0", source)
 
 
 if __name__ == "__main__":
