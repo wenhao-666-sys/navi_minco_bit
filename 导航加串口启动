@@ -7,21 +7,23 @@ sudo bash /home/robomaster/mid360-ptp/start.sh enp2s0
 
 终端B:
 cd ~/2027-sentry-navi
+
 source /opt/ros/humble/setup.bash
-source ~/QD_Vision26/install/setup.bash
 source install/setup.bash
 source ~/fwh/install/pointcloud_to_laserscan/share/pointcloud_to_laserscan/local_setup.bash
 
 export ROS_DOMAIN_ID=0
 export ROS_LOCALHOST_ONLY=0
 export RMW_IMPLEMENTATION=rmw_fastrtps_cpp
-export FASTRTPS_DEFAULT_PROFILES_FILE="$PWD/src/navigation/vel_rotate/config/fastdds_udp.xml"
-export FASTDDS_DEFAULT_PROFILES_FILE="$FASTRTPS_DEFAULT_PROFILES_FILE"
+
+unset FASTRTPS_DEFAULT_PROFILES_FILE
+unset FASTDDS_DEFAULT_PROFILES_FILE
 
 ros2 launch navi2 dual_lidar_mapping.launch.py \
   map_backend:=pcd \
-  output_dir:="$HOME/maps/pcd_site_20261024"
-
+  mapping_config:="$PWD/src/navigation/navi2_bringup/params/dual_lidar_mapping.yaml" \
+  output_dir:="$HOME/maps/pcd_site_$(date +%Y%m%d_%H%M%S)_range10" \
+  rviz:=true
 
 
 
@@ -37,34 +39,37 @@ ros2 launch navi2 dual_lidar_mapping.launch.py \
 二、导航和串口通信启动
 
 终端A:
-bash ~/2027-sentry-navi/src/navigation/vel_rotate/scripts/qd_bridge.bash serial
-
-
-
-bash ~/2027-sentry-navi/src/navigation/vel_rotate/scripts/qd_bridge.bash rotate
-
-
-
-终端B:
-# 终端 C：启动 GICP 导航
 cd ~/2027-sentry-navi
 source /opt/ros/humble/setup.bash
-source ~/QD_Vision26/install/setup.bash
+source install/setup.bash
+
+ros2 launch nav_serial_driver serial.launch.py \
+  port_name:=/dev/serial/by-id/usb-Echo_Echo_385E33783134-if00
+  
+  
+  
+终端B:
+终端 A：启动 PTP，保持运行；已经运行时不要重复启动。
+sudo bash /home/robomaster/mid360-ptp/start.sh enp2s0
+终端 B：使用下面的完整命令启动导航。
+cd ~/2027-sentry-navi
+
+source /opt/ros/humble/setup.bash
 source install/setup.bash
 source ~/fwh/install/pointcloud_to_laserscan/share/pointcloud_to_laserscan/local_setup.bash
 
 export ROS_DOMAIN_ID=0
 export ROS_LOCALHOST_ONLY=0
 export RMW_IMPLEMENTATION=rmw_fastrtps_cpp
-export FASTRTPS_DEFAULT_PROFILES_FILE="$PWD/src/navigation/vel_rotate/config/fastdds_udp.xml"
-export FASTDDS_DEFAULT_PROFILES_FILE="$FASTRTPS_DEFAULT_PROFILES_FILE"
 
-sudo -v
+unset FASTRTPS_DEFAULT_PROFILES_FILE
+unset FASTDDS_DEFAULT_PROFILES_FILE
 
 ros2 launch navi2 navigation2.launch.py \
   localization:=gicp \
-  map:="$HOME/maps/pcd_site_20261024/map.yaml" \
-  
+  map:="$HOME/maps/pcd_site_20261113_110731_range10_edited/map.yaml" \
+  start_ptp:=false \
+  start_serial:=false
   
   
   

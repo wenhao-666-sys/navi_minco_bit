@@ -18,7 +18,7 @@
           "color": "#FFAB00"
         },
         {
-          "value": "/nav/cmd_vel_real.linear.x",
+          "value": "/cmd_vel_real.linear.x",
           "enabled": true,
           "timestampMethod": "receiveTime",
           "label": "电控反馈实际速度",
@@ -49,7 +49,7 @@
           "color": "#FFAB00"
         },
         {
-          "value": "/nav/cmd_vel_real.linear.y",
+          "value": "/cmd_vel_real.linear.y",
           "enabled": true,
           "timestampMethod": "receiveTime",
           "label": "电控反馈实际速度",
@@ -80,7 +80,7 @@
           "color": "#FFAB00"
         },
         {
-          "value": "/nav/cmd_vel_real.angular.z",
+          "value": "/cmd_vel_real.angular.z",
           "enabled": true,
           "timestampMethod": "receiveTime",
           "label": "电控反馈实际速度",

@@ -30,7 +30,7 @@ public:
     uart_ = std::make_unique<qd::serial_driver::UartTransporter>(port, baud);
     tx_pub_ = create_publisher<nav_serial_driver::msg::SerialSendData>("/nav/serial/send", rclcpp::SensorDataQoS());
     rx_pub_ = create_publisher<nav_serial_driver::msg::SerialReceiveData>("/nav/serial/receive", rclcpp::SensorDataQoS());
-    actual_pub_ = create_publisher<geometry_msgs::msg::Twist>("/nav/cmd_vel_real", rclcpp::SensorDataQoS());
+    actual_pub_ = create_publisher<geometry_msgs::msg::Twist>("/cmd_vel_real", rclcpp::SensorDataQoS());
     command_sub_ = create_subscription<geometry_msgs::msg::Twist>(
       "/cmd_vel_mpc", rclcpp::SensorDataQoS(), [this](geometry_msgs::msg::Twist::ConstSharedPtr msg) {
         last_command_ = Clock::now();

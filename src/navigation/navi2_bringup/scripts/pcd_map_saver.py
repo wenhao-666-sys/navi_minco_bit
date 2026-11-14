@@ -19,6 +19,7 @@ from rclpy.node import Node
 from rclpy.qos import DurabilityPolicy, QoSProfile, ReliabilityPolicy
 from rclpy.signals import SignalHandlerOptions
 from sensor_msgs.msg import PointCloud2, PointField
+import tf2_ros
 
 from mapping_grid_saver import write_grid
 
@@ -100,8 +101,12 @@ class PcdMapSaver(Node):
         self.voxels = {}
         self.dirty = False
         self.saved = False
+        self.tf_buffer = tf2_ros.Buffer()
+        self.tf_listener = tf2_ros.TransformListener(self.tf_buffer, self)
         self.settings = {name: getattr(args, name) for name in
-                         ('resolution', 'ground_z', 'min_height', 'max_height', 'voxel_size')}
+                         ('resolution', 'ground_z', 'min_height', 'max_height', 'voxel_size',
+                          'max_range')}
+        self.settings.update(range_origin_frame='body', range_metric='horizontal')
         self.subscription = self.create_subscription(
             PointCloud2, args.input_topic, self.receive,
             QoSProfile(depth=1, reliability=ReliabilityPolicy.BEST_EFFORT))
@@ -120,12 +125,31 @@ class PcdMapSaver(Node):
     def accumulate(self):
         if self.latest is None:
             return
-        msg, self.latest = self.latest, None
+        msg = self.latest
+        try:
+            # Registered XYZ is in the world frame. Range must follow the IMU
+            # at this cloud's stamp, not the power-on origin or the latest pose.
+            transform = self.tf_buffer.lookup_transform(
+                'camera_init', 'body', rclpy.time.Time.from_msg(msg.header.stamp))
+        except tf2_ros.TransformException as error:
+            self.get_logger().warning(
+                f'Waiting for cloud-time IMU TF before PCD accumulation: {error}',
+                throttle_duration_sec=5.0)
+            return
+        self.latest = None
         points = read_xyz(msg)
         if not len(points):
             return
         if np.max(np.abs(points)) > 10000:
             raise ValueError('Invalid Point-LIO coordinates beyond 10 km')
+        origin = transform.transform.translation
+        if not all(math.isfinite(value) for value in (origin.x, origin.y)):
+            raise ValueError('Invalid IMU position for PCD range filtering')
+        distance_squared = ((points[:, 0].astype(np.float64) - origin.x) ** 2 +
+                            (points[:, 1].astype(np.float64) - origin.y) ** 2)
+        points = points[distance_squared <= self.args.max_range ** 2]
+        if not len(points):
+            return
         cells = np.floor(points / self.args.voxel_size).astype(np.int64)
         _, selected = np.unique(cells, axis=0, return_index=True)
         for cell, point in zip(cells[selected], points[selected]):
@@ -161,14 +185,16 @@ def main():
     parser.add_argument('--interval', type=float, default=10.0)
     parser.add_argument('--resolution', type=float, default=0.05)
     parser.add_argument('--voxel-size', type=float, default=0.05)
+    parser.add_argument('--max-range', type=float, default=10.0,
+                        help='Maximum horizontal range from cloud-time IMU position, in meters')
     parser.add_argument('--ground-z', type=float, required=True)
     parser.add_argument('--min-height', type=float, required=True)
     parser.add_argument('--max-height', type=float, required=True)
     parser.add_argument('--use-sim-time', choices=['true', 'false', 'True', 'False'], default='false')
     args = parser.parse_args()
     values = (args.interval, args.resolution, args.voxel_size, args.ground_z,
-              args.min_height, args.max_height)
-    if not all(math.isfinite(v) for v in values) or min(values[:3]) <= 0 or not (
+              args.min_height, args.max_height, args.max_range)
+    if not all(math.isfinite(v) for v in values) or min(values[:3]) <= 0 or args.max_range <= 0 or not (
             0 <= args.min_height < args.max_height):
         parser.error('Invalid export intervals, dimensions or height band')
     stopping = False

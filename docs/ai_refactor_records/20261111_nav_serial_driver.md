@@ -192,3 +192,58 @@ PASS（本次主机软件交付范围；不代表实车验收通过）。
 ### Final result
 
 PASS（主机软件范围）。电控必须使用新的 16/20 字节导航协议；尚未实车验证。
+
+## 物理串口验证（2026-11-12）
+
+用户接线后要求验证通信。本次不修改源码/参数、不构建、不配置系统设备别名。
+主机只识别到 /dev/ttyACM0，已有 /dev/rm_usb0 指向该设备，/dev/rm_nav0 不存在。
+稳定硬件路径为 /dev/serial/by-id/usb-Echo_Echo_385E33783134-if00；测试前未发现串口节点占用。
+
+先按 921600/8N1 只读采样 6 秒：12024 字节、601 个 CRC 正确的 20 字节 GD 帧，
+无合法 43 字节旧帧，最新 vx/vy/wz=0/0/0、big_yaw=26.103956°。
+随后在独立 ROS 域 88 运行已安装 nav_serial_node 8 秒，临时覆盖设备路径，
+将 /cmd_vel_mpc 重映射到无人发布的测试输入，保证只发送看门狗零帧。
+结果：798 条导航反馈、797 条实际速度观测、147 条完整 UART 写入成功观测；
+全部下发速度为零，最新实际速度为零、big_yaw=24.700211°。
+节点日志无通信错误，SIGINT 后退出码 0，测试节点已停止。
+
+结论 PASS：物理接收、CRC、新帧解析、ROS 发布及主机 UART 零帧写入通过。
+不能据此证明电控已解析/执行下发帧（协议无 ACK），未做非零运动或闭环跟随验证。
+默认 /dev/rm_nav0 尚未绑定，实际运行需临时传 port_name 或由维护者绑定别名。
+未执行构建：AGENTS.md 禁止在未获用户明确许可前运行构建命令；本次验证无需构建。
+
+## 实际速度话题与录包说明（2026-11-12，当前生效）
+
+### User Intent / Scope
+
+用户要求将电控实际底盘速度发布到 cmd_vel_real，并提供可回看对比指令与反馈的录包命令。
+仅调整导航包实际速度话题和对应 Foxglove、测试与操作说明；不改线协议、参数或导航控制。
+
+### Explorer Findings
+
+节点已经把反馈 chassis_vx/vy/wz 映射为 Twist 的 linear.x/linear.y/angular.z，
+原话题为 /nav/cmd_vel_real。串口发送成功观测 /nav/serial/send 可反映实际下发值和超时归零，
+比仅录制 /cmd_vel_mpc 更适合对比执行跟随。
+
+### Modifier Changes
+
+修改 src/nav_serial_node.cpp、test/test_pty_integration.py、config/foxglove_velocity.yaml/json：
+统一使用 /cmd_vel_real。README.md 补充三话题录包及 Foxglove 离线对比方法。
+旧 /nav/cmd_vel_real 不再发布；速度单位、映射、QoS、串口帧和看门狗保持不变。
+按用户要求使用根话题名；与视觉同 ROS 域运行时应避免其他节点也发布 /cmd_vel_real。
+
+### Auditor Review
+
+- [x] 检查发布者、测试订阅者、白名单和曲线全部同步改名。
+- [x] Python/JSON/YAML 解析及 git diff --check 通过。
+- [x] 沿用本会话相关包构建授权，主机构建 nav_serial_driver 通过，无警告。
+- [x] 独立 ROS 域 88、临时伪串口集成测试 PASS，实际速度新话题及完整回归验证通过。
+- [x] 通过本机 ros2 bag record --help 核对录制参数；未录制实车数据、未发送非零运动指令。
+
+录制 /cmd_vel_mpc、/nav/serial/send、/cmd_vel_real，Foxglove 统一使用 receiveTime。
+协议无电控采样时间戳，接收时间轴对比包含通信/调度延迟，不声明精确电控内部延迟。
+已经运行的旧串口进程需重启才会使用新话题。
+
+### Final result
+
+PASS。没有实际运动录包，未评价真实底盘跟随误差。

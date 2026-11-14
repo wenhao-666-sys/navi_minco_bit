@@ -38,6 +38,10 @@ def launch_mapping(context):
     height, roll = float(settings['lidar_height']), float(settings['lidar_roll_rad'])
     low, high = float(settings['obstacle_min_height']), float(settings['obstacle_max_height'])
     resolution, interval = float(settings['resolution']), float(settings['save_interval'])
+    if backend == 'pcd':
+        max_range = float(settings['max_mapping_range'])
+        if not math.isfinite(max_range) or max_range <= 0:
+            raise ValueError('max_mapping_range must be finite and positive.')
     if not all(math.isfinite(v) for v in (height, roll, low, high, resolution, interval)):
         raise ValueError('Mapping height, angle, bounds, resolution and save interval must be finite.')
     if not (height > 0 and 0 <= low < high and resolution > 0 and interval > 0):
@@ -111,7 +115,7 @@ def launch_mapping(context):
                                 '--input-topic', '/cloud_registered_filtered',
                                 '--interval', str(interval), '--resolution', str(resolution),
                                 '--ground-z', str(-imu_height), '--min-height', str(low),
-                                '--max-height', str(high),
+                                '--max-height', str(high), '--max-range', str(max_range),
                                 '--use-sim-time', LaunchConfiguration('use_sim_time')],
                            output='screen', sigterm_timeout='30', sigkill_timeout='10'),
         ])

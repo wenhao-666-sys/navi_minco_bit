@@ -41,7 +41,7 @@ def main():
     received, sent, actual = [], [], []
     node.create_subscription(SerialReceiveData, '/nav/serial/receive', received.append, qos_profile_sensor_data)
     node.create_subscription(SerialSendData, '/nav/serial/send', sent.append, qos_profile_sensor_data)
-    node.create_subscription(Twist, '/nav/cmd_vel_real', actual.append, qos_profile_sensor_data)
+    node.create_subscription(Twist, '/cmd_vel_real', actual.append, qos_profile_sensor_data)
     publisher = node.create_publisher(Twist, '/cmd_vel_mpc', qos_profile_sensor_data)
     masters, slaves = [], []
     wire = bytearray()

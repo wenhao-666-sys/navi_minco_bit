@@ -662,7 +662,7 @@ void publish_odometry(const rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPt
     tf2::Quaternion q;
     q.setRPY(0, 0, yaw_pose);
     // tf2::Vector3 offset_vec(0.0, 0.15, 0.0);
-    tf2::Vector3 offset_vec(0.0, 0.20, 0.0);  // 变形哨
+    tf2::Vector3 offset_vec(0.06994, -0.23215, 0.0);  // 导航参考点偏移，单位 m
     tf2::Vector3 base_pose =
       tf2::Vector3(odomAftMapped.pose.pose.position.x, odomAftMapped.pose.pose.position.y, odomAftMapped.pose.pose.position.z) +
       tf2::quatRotate(q, offset_vec);
