@@ -1,4 +1,3 @@
-录制实际速度和下发速度bag
 cd ~/2027-sentry-navi
 source /opt/ros/humble/setup.bash
 source install/setup.bash
